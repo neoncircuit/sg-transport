@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SG Live — Singapore Transport Map</title>
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <div id="map" role="application" aria-label="Singapore live transport map"></div>
+    <header class="hud">
+      <div class="brand">SG Live</div>
+      <p class="status" id="status">Connecting…</p>
+    </header>
+    <footer class="credits">
+      Inspired by
+      <a href="https://london.jamespotter.dev/" target="_blank" rel="noreferrer"
+        >James Potter’s Zone One</a
+      >
+      and
+      <a href="https://london.pengrubin.com" target="_blank" rel="noreferrer"
+        >Hongwei PENG’s London Live</a
+      >
+      — adapted for Singapore. Basemap
+      <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a>
+      / OSM. Phase 0: simulated vehicles.
+    </footer>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

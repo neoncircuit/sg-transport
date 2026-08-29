@@ -1,0 +1,77 @@
+:root {
+  --ink: #e8eef5;
+  --muted: #9aa8b8;
+  --panel: rgba(12, 18, 28, 0.78);
+  --accent: #3ecf8e;
+  --font-display: "Segoe UI", "Helvetica Neue", sans-serif;
+  --font-body: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background: #0b1220;
+}
+
+#map {
+  position: absolute;
+  inset: 0;
+}
+
+.hud {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  z-index: 2;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+  max-width: min(22rem, calc(100vw - 2rem));
+  pointer-events: none;
+}
+
+.brand {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.status {
+  margin: 0.35rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.status.live {
+  color: var(--accent);
+}
+
+.credits {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 2;
+  padding: 0.55rem 1rem;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--muted);
+  background: linear-gradient(transparent, rgba(8, 12, 20, 0.92));
+}
+
+.credits a {
+  color: #c9d7e8;
+}
+
+.maplibregl-ctrl-attrib {
+  font-size: 0.65rem;
+}
