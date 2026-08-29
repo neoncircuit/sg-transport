@@ -1,13 +1,14 @@
 import type { VehicleMode } from "@sg-transport/shared-types";
 
-/** Layer colours — distinct enough on a dark basemap. */
-export const MODE_COLORS: Record<VehicleMode, string> = {
-  bus: "#f4a261",
-  mrt: "#e63946",
-  lrt: "#f77f00",
-  plane: "#4cc9f0",
-  ship: "#90e0ef",
+export const MODE_LABELS: Record<VehicleMode, string> = {
+  bus: "Bus",
+  mrt: "MRT",
+  lrt: "LRT",
+  plane: "Air",
+  ship: "Sea",
 };
+
+export const ALL_MODES: VehicleMode[] = ["bus", "mrt", "lrt", "plane", "ship"];
 
 export const SINGAPORE_CENTER: [number, number] = [103.8198, 1.3521];
 export const SINGAPORE_ZOOM = 11;

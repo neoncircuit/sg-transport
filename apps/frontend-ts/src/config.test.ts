@@ -1,12 +1,11 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { MODE_COLORS } from "./config.js";
+import { ALL_MODES, MODE_LABELS } from "./config.js";
 
-describe("MODE_COLORS", () => {
+describe("mode labels", () => {
   it("covers every VehicleMode", () => {
-    for (const mode of ["bus", "mrt", "lrt", "plane", "ship"] as const) {
-      assert.equal(typeof MODE_COLORS[mode], "string");
-      assert.match(MODE_COLORS[mode], /^#/);
+    for (const mode of ALL_MODES) {
+      assert.equal(typeof MODE_LABELS[mode], "string");
     }
   });
 });

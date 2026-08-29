@@ -1,17 +1,48 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="harbour">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>SG Live — Singapore Transport Map</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="/src/styles.css" />
   </head>
   <body>
     <div id="map" role="application" aria-label="Singapore live transport map"></div>
-    <header class="hud">
-      <div class="brand">SG Live</div>
-      <p class="status" id="status">Connecting…</p>
+
+    <header class="hud" aria-label="SG Live status">
+      <div class="hud-brand-row">
+        <h1 class="brand">SG Live</h1>
+        <span class="phase-badge" title="No live LTA feeds yet">Phase 0</span>
+      </div>
+      <p class="tagline">Singapore, moving</p>
+      <div class="status-row">
+        <span class="live-dot" id="live-dot" aria-hidden="true"></span>
+        <p class="status" id="status">Connecting…</p>
+      </div>
+      <ul class="legend" id="legend" aria-label="Vehicle modes">
+        <li data-mode="bus"><span class="swatch"></span>Bus <b id="count-bus">0</b></li>
+        <li data-mode="mrt"><span class="swatch"></span>MRT <b id="count-mrt">0</b></li>
+        <li data-mode="lrt"><span class="swatch"></span>LRT <b id="count-lrt">0</b></li>
+        <li data-mode="plane"><span class="swatch"></span>Air <b id="count-plane">0</b></li>
+        <li data-mode="ship"><span class="swatch"></span>Sea <b id="count-ship">0</b></li>
+      </ul>
+      <div class="theme-picker">
+        <span class="theme-picker-label" id="theme-label">Theme</span>
+        <ul
+          class="theme-swatches"
+          id="theme-swatches"
+          role="radiogroup"
+          aria-labelledby="theme-label"
+        ></ul>
+      </div>
     </header>
+
     <footer class="credits">
       Inspired by
       <a href="https://london.jamespotter.dev/" target="_blank" rel="noreferrer"
@@ -23,8 +54,9 @@
       >
       — adapted for Singapore. Basemap
       <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a>
-      / OSM. Phase 0: simulated vehicles.
+      / OSM. Vehicles on screen are <em>simulated</em>.
     </footer>
+
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
