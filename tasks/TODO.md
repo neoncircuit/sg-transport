@@ -34,16 +34,15 @@ before a single vehicle is on the map.
 
 ### Phase 0b — CI / Docker / public URL (next)
 
-- [ ] GitHub Actions workflow: lint + typecheck + build on every PR, for
-      every package in the monorepo (use Turborepo's affected-package
-      detection so this doesn't get slow)
-- [ ] Docker image build for `backend-ts` and one poller stub, pushed to a
-      registry on merge to `main` (deploy can be manual at this stage)
-- [ ] Deploy `frontend-ts` + `backend-ts` to a real (if empty) public URL
+- [x] GitHub Actions workflow: lint + typecheck + test + build on every PR/push
+- [x] Docker images for `backend-ts` and `bus-poller-ts` stub; push to GHCR on
+      merge to `main` (build-only on PRs)
+- [ ] Deploy `frontend-ts` + `backend-ts` to a real public URL (deferred until
+      hosting is chosen)
 
-**Done when**: a public URL shows a map of Singapore with fake dots moving
-on a timer, and a PR triggers lint/typecheck/build automatically.
-**Tag**: `v0.0.2`
+**Done when**: CI is green on PRs, Docker images build (and push on `main`);
+public URL remains an open item.
+**Tag**: `v0.0.2` (CI/Docker); public URL can land as `v0.0.3`
 
 ---
 

@@ -22,13 +22,29 @@ pnpm dev
 ## Workspace layout
 
 ```
-apps/frontend-ts       MapLibre GL + Vite
-apps/backend-ts        WebSocket gateway (fake vehicles for now)
+apps/frontend-ts           MapLibre GL + Vite
+apps/backend-ts            WebSocket gateway (fake vehicles for now)
 packages/shared-types-ts   VehiclePosition contract
+services/bus-poller-ts     Stub poller (real LTA wiring in Phase 2)
+infra/docker/              Dockerfiles for gateway + poller stub
+.github/workflows/ci.yml   Lint, typecheck, test, build, Docker
 ```
 
 See [`DESIGN.md`](./DESIGN.md) for architecture and [`tasks/TODO.md`](./tasks/TODO.md)
 for the phased build plan.
+
+## Docker (Phase 0b)
+
+```bash
+docker build -f infra/docker/Dockerfile.backend -t sg-transport-backend .
+docker build -f infra/docker/Dockerfile.bus-poller -t sg-transport-bus-poller .
+docker run --rm -p 8787:8787 sg-transport-backend
+```
+
+On push to `main`, CI builds and pushes both images to GHCR
+(`ghcr.io/<owner>/sg-transport-backend` and `…-bus-poller`).
+
+Public deploy of the map is still deferred until a host is chosen.
 
 ## Scripts
 
