@@ -95,12 +95,12 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
 - [x] Expand local dumps: committed overlapping Victoria St fixtures so
       `extract:bus` always yields polylines; falls back when `data/lta/` pages
       don't overlap. Still want full island Stops↔Routes when keyed.
-- [ ] `services/bus-poller-ts`: poll LTA Bus Arrival, normalize to
-      `VehiclePosition`, push into gateway's state store
-- [ ] Confirm actual API rate limit in practice (DESIGN.md §7.1) and design
-      the polling schedule around it — priority tiering for high-traffic
-      stops if needed
-- [ ] Snap Arrival GPS onto Routes polylines (Turf.js `nearestPointOnLine`)
+- [x] Snap Arrival GPS onto Routes polylines (Turf.js `nearestPointOnLine`);
+      west corridor fixture aligns sample Arrival GPS for offline demos
+- [x] Poll schedule scaffold: 20s cadence + hot/normal tier round-robin
+      (`schedule.ts`) ready for the live Arrival client
+- [ ] `services/bus-poller-ts`: poll LTA Bus Arrival live (needs AccountKey)
+- [ ] Confirm actual API rate limit in practice and tune `planArrivalPoll` budget
 - [x] `backend-ts` fans out ingested bus positions over the existing WS channel
       (skeleton overlay; live GPS when keyed)
 - [x] Integration test: poller-shaped ingest → gateway → WS client receives

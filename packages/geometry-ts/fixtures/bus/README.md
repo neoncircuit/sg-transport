@@ -1,8 +1,9 @@
 # Bus geometry fixtures
 
-Small **overlapping** BusStops + BusRoutes samples (Victoria St area) so
-`pnpm extract:bus` can produce real LineStrings without a DataMall key or
-full island dumps.
+Overlapping BusStops + BusRoutes so `pnpm extract:bus` works without a key:
 
-Used automatically when local `data/lta/` dumps yield 0 overlapping features
-(common with single-page API samples).
+- **DEMO** — Victoria St (from DataMall BusStops sample page)
+- **WEST** — corridor through sample Bus Arrival GPS points so fixture
+  buses can snap onto a line offline
+
+Used when local `data/lta/` dumps yield 0 overlapping features.

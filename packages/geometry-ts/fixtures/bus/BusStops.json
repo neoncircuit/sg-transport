@@ -28,6 +28,62 @@
       "Description": "Opp Natl Lib",
       "Latitude": 1.2966729849642,
       "Longitude": 103.85441422464267
+    },
+    {
+      "BusStopCode": "W001",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 1",
+      "Latitude": 1.3087378333333333,
+      "Longitude": 103.73379016666667
+    },
+    {
+      "BusStopCode": "W002",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 2",
+      "Latitude": 1.3144378333333333,
+      "Longitude": 103.75299533333333
+    },
+    {
+      "BusStopCode": "W003",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 3",
+      "Latitude": 1.3100396666666667,
+      "Longitude": 103.75647683333334
+    },
+    {
+      "BusStopCode": "W004",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 4",
+      "Latitude": 1.3090805,
+      "Longitude": 103.76039283333333
+    },
+    {
+      "BusStopCode": "W005",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 5",
+      "Latitude": 1.312363,
+      "Longitude": 103.76434116666667
+    },
+    {
+      "BusStopCode": "W006",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 6",
+      "Latitude": 1.2757191666666667,
+      "Longitude": 103.793202
+    },
+    {
+      "BusStopCode": "W007",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 7",
+      "Latitude": 1.27424,
+      "Longitude": 103.79662333333333
+    },
+    {
+      "BusStopCode": "W008",
+      "RoadName": "Fixture West Corridor",
+      "Description": "WEST sample 8",
+      "Latitude": 1.278829,
+      "Longitude": 103.81719033333333
     }
   ]
 }

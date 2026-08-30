@@ -64,6 +64,70 @@
       "StopSequence": 4,
       "BusStopCode": "01012",
       "Distance": 0.4
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 1,
+      "BusStopCode": "W001",
+      "Distance": 0
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 2,
+      "BusStopCode": "W002",
+      "Distance": 2.1
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 3,
+      "BusStopCode": "W003",
+      "Distance": 2.5
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 4,
+      "BusStopCode": "W004",
+      "Distance": 3.0
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 5,
+      "BusStopCode": "W005",
+      "Distance": 3.5
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 6,
+      "BusStopCode": "W006",
+      "Distance": 7.0
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 7,
+      "BusStopCode": "W007",
+      "Distance": 7.4
+    },
+    {
+      "ServiceNo": "WEST",
+      "Operator": "SBST",
+      "Direction": 1,
+      "StopSequence": 8,
+      "BusStopCode": "W008",
+      "Distance": 9.5
     }
   ]
 }

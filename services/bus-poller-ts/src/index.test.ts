@@ -1,11 +1,18 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
+import type { FeatureCollection } from "geojson";
 import { vehiclesFromArrivalFixtures } from "./fixture.js";
 import {
   normalizeBusArrival,
   type LtaBusArrivalResponse,
 } from "./normalize.js";
+import {
+  ARRIVAL_UPDATE_MS,
+  classifyStops,
+  planArrivalPoll,
+} from "./schedule.js";
 import { SkeletonBusSource } from "./skeleton.js";
+import { snapVehiclesToRoutes } from "./snap.js";
 import { collectVehicles } from "./source.js";
 
 const fixture: LtaBusArrivalResponse = {
@@ -93,5 +100,54 @@ describe("collectVehicles cascade", () => {
       if (prev === undefined) delete process.env.LTA_ACCOUNT_KEY;
       else process.env.LTA_ACCOUNT_KEY = prev;
     }
+  });
+});
+
+describe("snapVehiclesToRoutes", () => {
+  it("pulls an off-route bus onto the nearest LineString", () => {
+    const routes: FeatureCollection = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: {},
+          geometry: {
+            type: "LineString",
+            coordinates: [
+              [103.75, 1.31],
+              [103.76, 1.31],
+              [103.77, 1.31],
+            ],
+          },
+        },
+      ],
+    };
+    const [snapped] = snapVehiclesToRoutes(
+      [
+        {
+          id: "bus-1",
+          mode: "bus",
+          lat: 1.3105,
+          lon: 103.76,
+          observedAt: 1,
+          isInferred: false,
+        },
+      ],
+      routes,
+      { maxKm: 1 },
+    );
+    assert.ok(snapped);
+    assert.ok(Math.abs(snapped.lat - 1.31) < 1e-6);
+    assert.ok(Math.abs(snapped.lon - 103.76) < 1e-6);
+  });
+});
+
+describe("planArrivalPoll", () => {
+  it("respects budget and prefers hot stops across cycles", () => {
+    const stops = classifyStops(["A", "B", "C"], ["A"]);
+    const first = planArrivalPoll(stops, 0, 2);
+    assert.equal(first.plan.stops.length, 2);
+    assert.ok(first.plan.stops.includes("A"));
+    assert.equal(first.plan.nextDelayMs, ARRIVAL_UPDATE_MS);
   });
 });

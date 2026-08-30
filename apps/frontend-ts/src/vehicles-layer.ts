@@ -79,9 +79,19 @@ export function ensureVehicleLayer(map: MapLibreMap, theme: ThemeDefinition): vo
         4.25,
       ],
       "circle-color": ["get", "color"],
-      "circle-stroke-width": 1.25,
+      "circle-stroke-width": [
+        "case",
+        ["==", ["to-boolean", ["get", "isInferred"]], true],
+        2,
+        1.25,
+      ],
       "circle-stroke-color": theme.stroke,
-      "circle-opacity": 0.96,
+      "circle-opacity": [
+        "case",
+        ["==", ["to-boolean", ["get", "isInferred"]], true],
+        0.62,
+        0.96,
+      ],
     },
   });
 
