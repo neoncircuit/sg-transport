@@ -78,16 +78,30 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
 ## Phase 2 — Bus layer (first real live data)
 
 **Goal**: first end-to-end live layer, buses only.
+**DataMall bus Dynamic Datasets** (priority before MRT / everything else):
 
-- [ ] `services/bus-poller-ts`: poll LTA DataMall Bus Arrival API, normalize to
+| Dataset | Cadence | Role |
+|---|---|---|
+| Bus Arrival | Real-time | Live GPS → `VehiclePosition` (poller) |
+| Bus Stops | Ad-hoc | Stop coords (geometry) |
+| Bus Routes | Ad-hoc | Stop sequences → polylines (geometry + snap) |
+| Bus Services | Ad-hoc | Metadata / filters (not motion) |
+
+- [x] Skeleton: `bus-poller-ts` → `POST /ingest` → gateway WS (no DataMall key;
+      local drifting fleet + Arrival normalizer fixture ready for the key)
+- [x] JSON-first: fixtures for Arrival / Stops / Routes / Services; poller
+      cascade `lta → fixture → skeleton` (local dumps = offline / key / API
+      fallback) + geometry extract from `data/lta/`
+- [ ] Expand local dumps: full Stops↔Routes overlap (paginate `$skip`) so
+      `extract:bus` produces real polylines; more Arrival stop samples
+- [ ] `services/bus-poller-ts`: poll LTA Bus Arrival, normalize to
       `VehiclePosition`, push into gateway's state store
 - [ ] Confirm actual API rate limit in practice (DESIGN.md §7.1) and design
       the polling schedule around it — priority tiering for high-traffic
       stops if needed
-- [ ] Snap bus GPS onto its route polyline (Turf.js `nearestPointOnLine`)
-      before broadcasting, so motion looks clean rather than jittery
-- [ ] `backend-ts` fans out real bus positions over the existing WS channel
-      from Phase 0
+- [ ] Snap Arrival GPS onto Routes polylines (Turf.js `nearestPointOnLine`)
+- [x] `backend-ts` fans out ingested bus positions over the existing WS channel
+      (skeleton overlay; live GPS when keyed)
 - [ ] Integration test: poller → gateway → a test WS client receives a
       well-formed `VehiclePosition[]` within N seconds of startup
 - [ ] CI: this test runs on every PR touching `bus-poller-ts` or `backend-ts`

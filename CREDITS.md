@@ -13,6 +13,8 @@ SG Live is inspired by two existing London transport maps:
 Basemap tiles via [OpenFreeMap](https://openfreemap.org) / Protomaps, built
 from [OpenStreetMap](https://www.openstreetmap.org/copyright) data (ODbL).
 
-Live transport data (from Phase 2 onward) will come from LTA DataMall and
+Live transport data (from Phase 2 onward) will come from
+[LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) and
 other sources; each will be attributed in the site footer and here when wired
-up.
+up. Follow [`docs/datamall.md`](./docs/datamall.md) for official guides,
+licence, and API terms.

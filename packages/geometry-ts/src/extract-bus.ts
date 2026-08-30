@@ -1,11 +1,11 @@
 /**
- * Phase 1 bus geometry extractor (LTA DataMall).
+ * Bus geometry from LTA DataMall BusStops + BusRoutes.
  *
- * Requires `LTA_ACCOUNT_KEY` from https://datamall.lta.gov.sg/
- * Endpoints: /BusStops and /BusRoutes (paginated, $skip).
+ * Prefers local dumps under `data/lta/` (no AccountKey). Falls back to live
+ * paginated fetch when `LTA_ACCOUNT_KEY` is set.
  */
 
-import { mkdir, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -13,10 +13,19 @@ import {
   type BusRouteRow,
   type BusStop,
 } from "./bus-geojson.js";
+import { defaultLtaDataDir, loadValueDump, resolveDumpPath } from "./lta-dump.js";
 
 const BASE =
   process.env.LTA_DATAMALL_BASE ??
   "https://datamall2.mytransport.sg/ltaodataservice";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const outDir = path.resolve(here, "../data");
+const outFile = path.join(outDir, "bus.geojson");
+const frontendCopy = path.resolve(
+  here,
+  "../../../apps/frontend-ts/public/geometry/bus.geojson",
+);
 
 async function fetchAllPages<T>(
   endpoint: string,
@@ -44,37 +53,73 @@ async function fetchAllPages<T>(
   return rows;
 }
 
+async function loadLocal(): Promise<{ stops: BusStop[]; routes: BusRouteRow[] } | null> {
+  const stopsPath = await resolveDumpPath("BusStops");
+  const routesPath = await resolveDumpPath("BusRoutes");
+  if (!stopsPath || !routesPath) return null;
+  console.log(`[geometry] local dumps:\n  ${stopsPath}\n  ${routesPath}`);
+  const [stops, routes] = await Promise.all([
+    loadValueDump<BusStop>(stopsPath),
+    loadValueDump<BusRouteRow>(routesPath),
+  ]);
+  return { stops, routes };
+}
+
+async function loadLive(accountKey: string): Promise<{
+  stops: BusStop[];
+  routes: BusRouteRow[];
+}> {
+  console.log("[geometry] downloading LTA BusStops + BusRoutes…");
+  const [stops, routes] = await Promise.all([
+    fetchAllPages<BusStop>("BusStops", accountKey),
+    fetchAllPages<BusRouteRow>("BusRoutes", accountKey),
+  ]);
+  return { stops, routes };
+}
+
 async function main(): Promise<void> {
-  const accountKey = process.env.LTA_ACCOUNT_KEY;
-  if (!accountKey) {
+  const local = await loadLocal();
+  const accountKey = process.env.LTA_ACCOUNT_KEY?.trim();
+
+  let stops: BusStop[];
+  let routes: BusRouteRow[];
+
+  if (local) {
+    ({ stops, routes } = local);
+  } else if (accountKey) {
+    ({ stops, routes } = await loadLive(accountKey));
+  } else {
     console.error(
       [
-        "[geometry] LTA_ACCOUNT_KEY is not set.",
-        "  1. Request a key at https://datamall.lta.gov.sg/",
-        "  2. export LTA_ACCOUNT_KEY=…  (or set in .env — never commit it)",
-        "  3. pnpm --filter @sg-transport/geometry extract:bus",
-        "Rail geometry does not need a key: pnpm --filter @sg-transport/geometry extract:rail",
+        "[geometry] no local BusStops/BusRoutes dumps and no LTA_ACCOUNT_KEY.",
+        `  Expected under ${defaultLtaDataDir()}/ (see data/lta/README.md)`,
+        "  or set LTA_ACCOUNT_KEY and re-run.",
       ].join("\n"),
     );
     process.exitCode = 2;
     return;
   }
 
-  console.log("[geometry] downloading LTA BusStops + BusRoutes…");
-  const [stops, routes] = await Promise.all([
-    fetchAllPages<BusStop>("BusStops", accountKey),
-    fetchAllPages<BusRouteRow>("BusRoutes", accountKey),
-  ]);
   const geojson = buildServiceLines(stops, routes);
+  if (geojson.features.length === 0) {
+    console.warn(
+      [
+        "[geometry] 0 bus line features — dumps likely don't overlap.",
+        "  Partial DataMall samples often have Routes for service N and Stops",
+        "  from a different page. Need matching full (or same-$skip) dumps.",
+      ].join("\n"),
+    );
+  }
 
-  const here = path.dirname(fileURLToPath(import.meta.url));
-  const outDir = path.resolve(here, "../data");
-  const outFile = path.join(outDir, "bus.geojson");
   await mkdir(outDir, { recursive: true });
   await writeFile(outFile, `${JSON.stringify(geojson)}\n`, "utf8");
+  await mkdir(path.dirname(frontendCopy), { recursive: true });
+  await copyFile(outFile, frontendCopy);
   console.log(
-    `[geometry] wrote ${geojson.features.length} bus service lines → ${outFile}`,
+    `[geometry] ${stops.length} stops, ${routes.length} route rows → ${geojson.features.length} lines`,
   );
+  console.log(`[geometry] wrote ${outFile}`);
+  console.log(`[geometry] copied ${frontendCopy}`);
 }
 
 main().catch((err: unknown) => {

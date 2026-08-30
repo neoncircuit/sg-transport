@@ -5,9 +5,9 @@ moving dots on real route geometry. Inspired by James Potter’s
 [Zone One](https://london.jamespotter.dev/) and Hongwei PENG’s
 [London Live](https://london.pengrubin.com).
 
-> **Status:** Phase 1 in progress — MapLibre map with simulated vehicles +
-> OSM MRT/LRT line geometry. Bus geometry awaits an LTA DataMall key.
-> Public deploy is last (Phase 8).
+> **Status:** Phase 2 skeleton — MapLibre map, OSM rail geometry, and a
+> poller→gateway ingest path with a local bus fleet. Live LTA DataMall
+> waits on an account key. Public deploy is last (Phase 8).
 
 ## Quick start
 
@@ -18,21 +18,28 @@ pnpm dev
 
 - Frontend: http://localhost:5173  
 - Gateway (health): http://localhost:8787/health  
+- Ingest: `POST http://localhost:8787/ingest`  
 - WebSocket: `ws://localhost:8787/ws`
+
+`pnpm dev` runs the frontend, gateway, and bus-poller. Without
+`LTA_ACCOUNT_KEY`, the poller pushes a skeleton bus fleet into the gateway
+(fake MRT/plane/ship dots remain). Copy `.env.example` when you get a key.
 
 ## Workspace layout
 
 ```
 apps/frontend-ts           MapLibre GL + Vite
-apps/backend-ts            WebSocket gateway (fake vehicles for now)
+apps/backend-ts            WebSocket gateway + poller ingest
 packages/shared-types-ts   VehiclePosition contract
-services/bus-poller-ts     Stub poller (real LTA wiring in Phase 2)
-infra/docker/              Dockerfiles for gateway + poller stub
+packages/geometry-ts       OSM rail / LTA bus geometry extract
+services/bus-poller-ts     Skeleton fleet now; LTA when keyed
+infra/docker/              Dockerfiles for gateway + poller
 .github/workflows/ci.yml   Lint, typecheck, test, build, Docker
 ```
 
-See [`DESIGN.md`](./DESIGN.md) for architecture and [`tasks/TODO.md`](./tasks/TODO.md)
-for the phased build plan.
+See [`DESIGN.md`](./DESIGN.md) for architecture, [`tasks/TODO.md`](./tasks/TODO.md)
+for the phased build plan, and [`docs/datamall.md`](./docs/datamall.md) for
+official LTA DataMall guide / licence links.
 
 ## Geometry (Phase 1)
 

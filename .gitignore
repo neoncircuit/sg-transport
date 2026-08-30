@@ -35,6 +35,10 @@ data/*.pmtiles
 data/*.pbf
 !data/.gitkeep
 
+# Local LTA DataMall dumps (may be large / licence-sensitive)
+data/lta/**/*.json
+!data/lta/README.md
+
 # Claude / Cursor local-only
 CLAUDE.local.md
 .claude/settings.local.json

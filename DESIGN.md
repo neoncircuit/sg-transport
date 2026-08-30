@@ -19,7 +19,7 @@ in §4.
 
 | Layer | London used | Singapore equivalent | Verdict |
 |---|---|---|---|
-| Buses | TfL bus GPS (noisy, route-snapped) | **LTA DataMall Bus Arrival API** — returns live lat/long + load per bus, per stop | Actually easier: GPS is given directly, no need to learn routes from traces (though snapping to a line is still needed for smooth animation) |
+| Buses | TfL bus GPS (noisy, route-snapped) | **LTA DataMall bus Dynamic Datasets** (4): Arrival (real-time GPS/ETA/load); Routes, Services, Stops (ad-hoc reference) | Actually easier: Arrival gives GPS directly; the other three build geometry + metadata. Snap Arrival fixes onto Routes polylines for smooth motion |
 | Tube/rail | TfL countdown boards, inferred position | **No official train-position or countdown API.** An undocumented, unofficial SMRT arrival endpoint exists (used by RailRouter SG / similar hobby projects) that returns per-platform `next_train_arr` countdowns | Hardest layer — see §4 |
 | National Rail | Darwin departure boards | N/A — Singapore has no long-distance rail network | Drop this layer |
 | Planes | ADS-B | ADS-B (adsb.lol, ADSBExchange, or a local RTL-SDR receiver near Changi) | Same approach, works out of the box |
@@ -31,9 +31,16 @@ in §4.
 
 None of LTA's dynamic APIs return rail line geometry. Plan:
 
-- **Bus routes**: LTA DataMall static Bus Routes + Bus Stops datasets give
-  stop sequences per service; combine with OSM way geometry between stops
-  for a driveable polyline.
+- **Buses (DataMall Dynamic Datasets — priority layer)**:
+  - **Bus Arrival** (real-time): live lat/lon + ETA + load per stop →
+    `VehiclePosition`. This is the only bus feed that must be polled live.
+  - **Bus Stops** (ad-hoc): stop codes + coordinates.
+  - **Bus Routes** (ad-hoc): ordered stop sequence per service/direction →
+    stop-to-stop polylines (OSM snap between stops later).
+  - **Bus Services** (ad-hoc): operator, termini, peak/off-peak frequency —
+    layer labels / filters, not motion.
+  Until an AccountKey lands, work from JSON fixtures matching these shapes;
+  the live client plugs into the same normalizers.
 - **MRT/LRT lines**: no official GeoJSON. Source from OSM Singapore extract
   (Overpass API or a Geofabrik `.pbf`), filtering `route=subway`/`route=light_rail`
   relations. This needs manual cleanup — OSM rail relations are decent for SG
@@ -115,11 +122,12 @@ interface VehiclePosition {
 
 ## 7. Risks / open questions to resolve before writing code
 
-1. **LTA DataMall rate limits** for the Bus Arrival API — it's per bus-stop-
-   code, and Singapore has ~5,000 stops. Confirm actual quota per API key
-   before assuming you can poll every stop every few seconds; you may need
-   to prioritize high-traffic stops or accept a slower refresh cycle for
-   quiet ones.
+1. **LTA DataMall rate limits** for Bus Arrival — per `BusStopCode`, update
+   frequency **20 seconds** (User Guide v6.9 §2.1, endpoint
+   `/ltaodataservice/v3/BusArrival`). Singapore has ~5,000 stops; with a
+   10M calls/day ToS ceiling you still cannot naïvely poll every stop every
+   cycle. Prioritize high-traffic stops or accept slower refresh for quiet
+   ones. List APIs (Routes/Stops/Services) return 500 rows per call + `$skip`.
 2. **Terms of use** — check DataMall's licence terms for public/commercial
    redistribution of live data on a public website before launching.
 3. **Confirm the unofficial SMRT endpoint actually still works** and decide
@@ -135,21 +143,18 @@ interface VehiclePosition {
 
 ## 8. Suggested build order
 
-Buses and MRT/LRT are Singapore's actual public transport, so they come
-first — planes and ships are additions once that core is solid, not
-prerequisites for it.
+**Priority: Buses → MRT/LRT → everything else.** Planes, ships, taxis, and
+traffic are not prerequisites for a useful Singapore public-transport map.
 
-1. Bus layer, using LTA DataMall GPS directly (best data quality, fastest
-   to a working demo).
-2. MRT/LRT, starting with scheduled/simulated positions (§4, option 3) —
-   this is what makes the map cover Singapore's public transport
-   completely, even before anything fancier is attempted.
+1. **Buses** — DataMall Arrival (live) + Stops/Routes/Services (ad-hoc
+   geometry & metadata). JSON fixtures first if the AccountKey is pending;
+   then flip to live Arrival polling.
+2. **MRT/LRT** — scheduled/simulated positions along OSM rail (§4, option 3)
+   so the map covers both halves of public transport.
 3. Only once both are stable: attempt live MRT/LRT inference via the
-   unofficial endpoint (§4, option 1), as an explicit stretch goal that's
-   allowed to not pan out.
-4. Planes (ADS-B) — low-risk, mainly proves the architecture is genuinely
-   layer-agnostic.
-5. Ships (AIS) — the most visually striking layer, but the least essential.
+   unofficial endpoint (§4, option 1) — stretch goal, allowed to fail.
+4. Everything else (planes, ships, taxis, …) — layer-agnostic extras once
+   the PT core is solid.
 
 See `TODO.md` for this build order broken into versioned, shippable phases
 with their own CI/CD checkpoints.

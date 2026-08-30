@@ -1,19 +1,23 @@
 import { createServer } from "node:http";
-import type { VehicleSnapshotMessage } from "@sg-transport/shared-types";
+import type {
+  VehiclePosition,
+  VehicleSnapshotMessage,
+} from "@sg-transport/shared-types";
 import { WebSocketServer, type WebSocket } from "ws";
-import { FakeVehicleStore } from "./fake-vehicles.js";
+import { VehicleStore } from "./vehicle-store.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const TICK_MS = Number(process.env.TICK_MS ?? 1000);
+const STALE_MS = Number(process.env.INGEST_STALE_MS ?? 30_000);
 
-const store = new FakeVehicleStore();
+const store = new VehicleStore(STALE_MS);
 const clients = new Set<WebSocket>();
 
 function snapshot(): VehicleSnapshotMessage {
   return {
     type: "snapshot",
     sentAt: Date.now(),
-    vehicles: store.tick(),
+    vehicles: store.snapshot(),
   };
 }
 
@@ -26,6 +30,65 @@ function broadcast(msg: VehicleSnapshotMessage): void {
   }
 }
 
+function readBody(req: import("node:http").IncomingMessage): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (chunk: Buffer) => chunks.push(chunk));
+    req.on("end", () => resolve(Buffer.concat(chunks).toString("utf8")));
+    req.on("error", reject);
+  });
+}
+
+function isVehiclePosition(value: unknown): value is VehiclePosition {
+  if (typeof value !== "object" || value === null) return false;
+  const v = value as Record<string, unknown>;
+  return (
+    typeof v.id === "string" &&
+    typeof v.mode === "string" &&
+    typeof v.lat === "number" &&
+    typeof v.lon === "number" &&
+    typeof v.observedAt === "number" &&
+    typeof v.isInferred === "boolean"
+  );
+}
+
+async function handleIngest(
+  req: import("node:http").IncomingMessage,
+  res: import("node:http").ServerResponse,
+): Promise<void> {
+  const raw = await readBody(req);
+  let body: unknown;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    res.writeHead(400, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "invalid JSON" }));
+    return;
+  }
+
+  if (typeof body !== "object" || body === null) {
+    res.writeHead(400, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "expected object body" }));
+    return;
+  }
+
+  const { source, vehicles } = body as Record<string, unknown>;
+  if (typeof source !== "string" || source.length === 0) {
+    res.writeHead(400, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "source string required" }));
+    return;
+  }
+  if (!Array.isArray(vehicles) || !vehicles.every(isVehiclePosition)) {
+    res.writeHead(400, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "vehicles must be VehiclePosition[]" }));
+    return;
+  }
+
+  store.ingest(source, vehicles);
+  res.writeHead(204);
+  res.end();
+}
+
 const server = createServer((req, res) => {
   if (req.url === "/health") {
     res.writeHead(200, { "content-type": "application/json" });
@@ -33,9 +96,19 @@ const server = createServer((req, res) => {
       JSON.stringify({
         ok: true,
         clients: clients.size,
-        phase: "0-fake",
+        phase: "2-skeleton",
+        sources: store.activeSources(),
       }),
     );
+    return;
+  }
+
+  if (req.url === "/ingest" && req.method === "POST") {
+    void handleIngest(req, res).catch((err: unknown) => {
+      console.error("[backend-ts] ingest failed", err);
+      res.writeHead(500, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "ingest failed" }));
+    });
     return;
   }
 
@@ -59,5 +132,6 @@ setInterval(() => {
 
 server.listen(PORT, () => {
   console.log(`[backend-ts] health http://localhost:${PORT}/health`);
+  console.log(`[backend-ts] ingest  POST http://localhost:${PORT}/ingest`);
   console.log(`[backend-ts] websocket ws://localhost:${PORT}/ws`);
 });
