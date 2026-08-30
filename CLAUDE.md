@@ -137,7 +137,8 @@ Then confirm:
 
 For detailed conventions, see:
 
-- `DESIGN.md` — architecture, data sources, MRT strategy
+- `docs/README.md` — documentation hub (architecture, development, DataMall)
+- `DESIGN.md` — product architecture, data sources, MRT strategy
 - `tasks/TODO.md` — phased build plan
 - `CREDITS.md` — attribution
 
