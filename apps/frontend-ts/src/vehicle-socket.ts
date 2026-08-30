@@ -8,13 +8,17 @@ export type StatusHandler = (status: "connecting" | "live" | "reconnecting" | "e
 
 /**
  * Thin WebSocket client that reconnects with backoff and only forwards
- * well-formed snapshot messages.
+ * well-formed snapshot messages. Designed for flaky mobile networks
+ * (DESIGN §11): aggressive reconnect, and optional pause while the tab
+ * is backgrounded to save battery.
  */
 export class VehicleSocket {
   private socket: WebSocket | null = null;
   private closedByUser = false;
   private attempt = 0;
   private reconnectTimer: number | null = null;
+  private paused = false;
+  private lastVehicles: VehiclePosition[] = [];
 
   constructor(
     private readonly url: string,
@@ -37,7 +41,10 @@ export class VehicleSocket {
       try {
         const data: unknown = JSON.parse(String(event.data));
         if (isVehicleSnapshotMessage(data)) {
-          this.onSnapshot(data.vehicles);
+          this.lastVehicles = data.vehicles;
+          if (!this.paused) {
+            this.onSnapshot(data.vehicles);
+          }
         }
       } catch {
         // Ignore malformed frames; keep listening.
@@ -56,6 +63,15 @@ export class VehicleSocket {
     });
   }
 
+  /** Stop applying map updates while backgrounded; keep the socket warm. */
+  setPaused(paused: boolean): void {
+    const wasPaused = this.paused;
+    this.paused = paused;
+    if (wasPaused && !paused && this.lastVehicles.length > 0) {
+      this.onSnapshot(this.lastVehicles);
+    }
+  }
+
   close(): void {
     this.closedByUser = true;
     if (this.reconnectTimer !== null) {
@@ -68,7 +84,8 @@ export class VehicleSocket {
 
   private scheduleReconnect(): void {
     this.attempt += 1;
-    const delay = Math.min(10_000, 500 * 2 ** Math.min(this.attempt, 4));
+    // Cap at 8s — mobile cellular flaps often; don't wait 10s+ to recover.
+    const delay = Math.min(8_000, 400 * 2 ** Math.min(this.attempt, 4));
     this.reconnectTimer = window.setTimeout(() => this.connect(), delay);
   }
 }

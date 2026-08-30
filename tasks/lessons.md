@@ -52,24 +52,25 @@ short and actionable.
 
 ### UI / UX direction (Phase 0 → polish)
 
-- The map **is** the hero — full-bleed MapLibre, not a dashboard of cards.
-- Brand **SG Live** must read as the primary signal in the first viewport;
-  status text and legends are secondary.
-- Default visual language: **harbour night** — deep ink basemap, warm amber,
-  cool cyan, live pulse. Also ship alternate HUD themes (cyberpunk yellow,
-  hacker neon, tron blue, gunmetal) via `data-theme` + localStorage; vehicle
-  dots recolour with the active theme. Avoid cream+terracotta poster looks
-  and broadsheet chrome as defaults.
-- HUD should feel like glass over the city (blur, thin rules), not floating
-  material cards. Mode legend + live counts earn their space; stats strips
-  and promo chips do not.
-- Motion: intentional only — HUD entrance, live pulse, vehicle glow. No
-  decorative particle noise.
-- Simulated data must stay honest in the chrome (“simulated” / Phase badge)
-  so we never train users to trust fake positions as live LTA.
+- **Mobile-first** (DESIGN §11): primary user is on a phone in transit.
+  Default chrome is a **bottom sheet** (peek + expand), not a desktop
+  sidebar. Desktop gets a docked panel at `min-width: 720px`.
+- Brand **SG Live** must still read clearly in the peek state.
+- Default visual language: **harbour night** + alternate themes via
+  `data-theme` + localStorage.
+- Touch: ≥44px targets; invisible vehicle hit layer (~18px radius) for taps.
+- **Locate me** is core chrome, not a nice-to-have.
+- Battery: pause applying WS snapshots while `document.hidden`.
+- Network: faster WS reconnect backoff for cellular flaps.
+- Simulated data stays honest in the chrome (“simulated” / Phase badge).
+- Public deploy remains last (Phase 8).
 
 ### Open follow-ups
 
-- Choose a public host (Cloudflare / Fly / etc.) for Phase 0b deploy.
-- Confirm LTA DataMall rate limits and licence before Phase 2 polling.
-- Spot-check OSM MRT geometry before locking animation paths (Phase 1).
+- **Public deploy is last** (Phase 8) — do not rush a public URL while the
+  map is still simulated / incomplete.
+- Confirm LTA DataMall rate limits and licence before Phase 2 polling;
+  obtain `LTA_ACCOUNT_KEY` to run `pnpm extract:bus`.
+- Spot-check OSM MRT geometry (CCL / DTL / NSL) — `SPOT_CHECKS.md`.
+- Overpass can 504 when busy; extractor retries kumi → overpass-api.de →
+  private.coffee. Local TLS interception may need a fixed trust store.

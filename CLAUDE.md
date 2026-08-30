@@ -29,6 +29,8 @@ sg-transport/
 - Clients talk only to `backend-ts` (never directly to pollers)
 - Prefer layer-agnostic pipeline; trains may be simulated until a durable feed exists
 - No direct LTA/third-party keys in the frontend
+- **Mobile-first UX** (see DESIGN.md §11): bottom sheet controls, large touch
+  targets, geolocation, battery-aware updates — desktop is the enhancement
 
 ---
 

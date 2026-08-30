@@ -175,6 +175,41 @@ behind the London Live site before publishing a credit line, rather than
 guessing from the domain — a quick check of the site's own about/footer or
 the LinkedIn post it was shared from should settle it.
 
+## 11. Mobile-first UX
+
+Realistically, the primary use case is someone checking their bus/train on
+their phone while actually out and about — not sitting at a desk. Desktop
+should still work, but the default design target is mobile, not a
+responsive afterthought bolted onto a desktop layout.
+
+Implications worth deciding early rather than retrofitting later:
+
+- **Layer/UI controls**: a bottom sheet or collapsible drawer for
+  layer toggles (bus/train/plane/ship) rather than a desktop sidebar —
+  sidebars eat too much of a phone viewport.
+- **Touch targets**: vehicle markers need a large enough hit area to tap
+  reliably on a small screen, independent of how small they render visually
+  at a given zoom level.
+- **Performance/battery**: continuous WebSocket updates + animated markers
+  are more battery-costly on mobile than desktop. Worth throttling animation
+  frame rate or update frequency when the tab/app isn't in the foreground,
+  and being conservative about how many layers are on by default (bus only,
+  rather than everything at once) until the user opts in to more.
+- **Geolocation**: "center on me" / "show what's near me" is a much more
+  natural mobile interaction than panning a full-city map manually — worth
+  treating as core rather than a nice-to-have, given the realistic use case
+  above.
+- **Network conditions**: mobile users are more likely to be on patchy
+  cellular (underground platforms, buses moving between cell towers) —
+  the WS/SSE reconnect logic in `backend-ts` needs to handle frequent
+  disconnects gracefully rather than assuming a stable connection.
+- **PWA**: worth considering "add to home screen" support once the core map
+  is stable — low effort relative to the payoff for a mobile-primary tool.
+
+This doesn't change the phased build order in `TODO.md` — it's a constraint
+on *how* `frontend-ts` and `backend-ts` are built in Phases 0–2, not a new
+phase of its own.
+
 ## 9. Project structure
 
 A Turborepo monorepo (same pattern as the AIAP TypeScript monorepo work) —

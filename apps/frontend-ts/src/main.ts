@@ -17,14 +17,21 @@ import {
   type ThemeId,
 } from "./themes";
 import { VehicleSocket } from "./vehicle-socket";
-import { ensureVehicleLayer, updateVehicles } from "./vehicles-layer";
+import { ensureStaticGeometryLayers } from "./static-layers";
+import { HIT_LAYER_ID, ensureVehicleLayer, updateVehicles } from "./vehicles-layer";
 
 const statusEl = document.querySelector<HTMLParagraphElement>("#status");
 const liveDotEl = document.querySelector<HTMLSpanElement>("#live-dot");
 const themeSwatchesEl = document.querySelector<HTMLUListElement>("#theme-swatches");
+const sheetEl = document.querySelector<HTMLElement>("#sheet");
+const sheetBodyEl = document.querySelector<HTMLElement>("#sheet-body");
+const sheetToggleEl = document.querySelector<HTMLButtonElement>("#sheet-toggle");
+const locateBtn = document.querySelector<HTMLButtonElement>("#locate-btn");
+const handleLabel = document.querySelector<HTMLElement>(".sheet-handle-label");
 
 let activeTheme: ThemeDefinition = applyTheme(readStoredTheme());
 let latestVehicles: VehiclePosition[] = [];
+let socket: VehicleSocket | null = null;
 
 function setStatus(text: string, live = false): void {
   if (!statusEl) return;
@@ -50,6 +57,14 @@ function updateLegend(vehicles: VehiclePosition[]): void {
     const el = document.querySelector<HTMLElement>(`#count-${mode}`);
     if (el) el.textContent = String(counts[mode]);
   }
+}
+
+function setSheetExpanded(expanded: boolean): void {
+  if (!sheetEl || !sheetBodyEl || !sheetToggleEl) return;
+  sheetEl.dataset.expanded = expanded ? "true" : "false";
+  sheetBodyEl.hidden = !expanded;
+  sheetToggleEl.setAttribute("aria-expanded", expanded ? "true" : "false");
+  if (handleLabel) handleLabel.textContent = expanded ? "Close" : "Details";
 }
 
 function syncThemeSwatches(selected: ThemeId): void {
@@ -88,6 +103,34 @@ function setTheme(id: ThemeId, map: maplibregl.Map | null): void {
   }
 }
 
+function centerOnMe(map: maplibregl.Map): void {
+  if (!navigator.geolocation) {
+    setStatus("Geolocation not available on this device");
+    return;
+  }
+  locateBtn?.setAttribute("data-busy", "true");
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      locateBtn?.removeAttribute("data-busy");
+      map.flyTo({
+        center: [pos.coords.longitude, pos.coords.latitude],
+        zoom: Math.max(map.getZoom(), 14),
+        essential: true,
+      });
+      setStatus("Centered on you", true);
+    },
+    (err) => {
+      locateBtn?.removeAttribute("data-busy");
+      setStatus(
+        err.code === err.PERMISSION_DENIED
+          ? "Location permission denied"
+          : "Couldn’t get your location",
+      );
+    },
+    { enableHighAccuracy: true, timeout: 12_000, maximumAge: 15_000 },
+  );
+}
+
 const map = new maplibregl.Map({
   container: "map",
   style: BASEMAP_STYLE,
@@ -95,16 +138,42 @@ const map = new maplibregl.Map({
   zoom: SINGAPORE_ZOOM,
   pitch: 0,
   attributionControl: { compact: true },
+  // Prefer touch gestures on phones
+  dragRotate: false,
+  pitchWithRotate: false,
 });
 
 map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
 
 renderThemeSwatches((id) => setTheme(id, map));
+sheetToggleEl?.addEventListener("click", () => {
+  const open = sheetEl?.dataset.expanded !== "true";
+  setSheetExpanded(Boolean(open));
+});
+locateBtn?.addEventListener("click", () => centerOnMe(map));
 
 map.on("load", () => {
   ensureVehicleLayer(map, activeTheme);
+  void ensureStaticGeometryLayers(map);
 
-  const socket = new VehicleSocket(
+  map.on("click", HIT_LAYER_ID, (e) => {
+    const feature = e.features?.[0];
+    if (!feature) return;
+    const id = String(feature.properties?.id ?? "");
+    const mode = String(feature.properties?.mode ?? "");
+    setStatus(`${mode.toUpperCase()} · ${id}`, true);
+    setSheetExpanded(true);
+  });
+
+  // Tap empty map to collapse the sheet (more map, less chrome).
+  map.on("click", (e) => {
+    const hits = map.queryRenderedFeatures(e.point, { layers: [HIT_LAYER_ID] });
+    if (hits.length === 0 && sheetEl?.dataset.expanded === "true") {
+      setSheetExpanded(false);
+    }
+  });
+
+  socket = new VehicleSocket(
     wsUrl(),
     (vehicles) => {
       latestVehicles = vehicles;
@@ -132,10 +201,13 @@ map.on("load", () => {
 
   socket.connect();
 
-  window.addEventListener("beforeunload", () => socket.close());
+  document.addEventListener("visibilitychange", () => {
+    socket?.setPaused(document.hidden);
+  });
+
+  window.addEventListener("beforeunload", () => socket?.close());
 });
 
-// Deep-link / bookmark: ?theme=tron
 const params = new URLSearchParams(window.location.search);
 const fromQuery = params.get("theme");
 if (isThemeId(fromQuery) && fromQuery !== activeTheme.id) {

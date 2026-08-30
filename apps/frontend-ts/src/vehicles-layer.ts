@@ -6,6 +6,8 @@ import type { ThemeDefinition } from "./themes";
 const SOURCE_ID = "vehicles";
 const GLOW_LAYER_ID = "vehicles-glow";
 const LAYER_ID = "vehicles-circle";
+/** Invisible larger hit area for reliable mobile taps (DESIGN §11). */
+export const HIT_LAYER_ID = "vehicles-hit";
 
 function toFeatureCollection(
   vehicles: VehiclePosition[],
@@ -80,6 +82,17 @@ export function ensureVehicleLayer(map: MapLibreMap, theme: ThemeDefinition): vo
       "circle-stroke-width": 1.25,
       "circle-stroke-color": theme.stroke,
       "circle-opacity": 0.96,
+    },
+  });
+
+  map.addLayer({
+    id: HIT_LAYER_ID,
+    type: "circle",
+    source: SOURCE_ID,
+    paint: {
+      "circle-radius": 18,
+      "circle-opacity": 0,
+      "circle-color": "#000000",
     },
   });
 }

@@ -10,14 +10,19 @@ Phase 1. Stay on `0.x` until the MRT layer has at least the scheduled/
 simulated fallback live (Phase 3 / `v0.3.0`) — that's the point this stops
 being a demo.
 
+**Public deploy is last.** Keep iterating locally (and via CI/Docker) until
+the core product is trustworthy. Do not put a half-finished map on a public
+URL just to check a Phase 0 box — shipping early and broken is worse than
+shipping late.
+
 ---
 
 ## Phase 0 — Repo & CI/CD skeleton (no data yet)
 
-**Goal**: prove the pipeline can build, test, and deploy an empty project
-before a single vehicle is on the map.
+**Goal**: prove the pipeline can build and test an empty project before a
+single real vehicle is on the map. Local demo + CI/Docker only.
 
-### Phase 0a — Local demo (current slice)
+### Phase 0a — Local demo
 
 - [x] Turborepo scaffold matching the structure in DESIGN.md §9
 - [x] `shared-types-ts` package with `VehiclePosition` interface, published
@@ -32,17 +37,16 @@ before a single vehicle is on the map.
 **Done when**: `pnpm dev` shows Singapore with fake dots moving locally.
 **Tag**: `v0.0.1` (local)
 
-### Phase 0b — CI / Docker / public URL (next)
+### Phase 0b — CI / Docker
 
 - [x] GitHub Actions workflow: lint + typecheck + test + build on every PR/push
 - [x] Docker images for `backend-ts` and `bus-poller-ts` stub; push to GHCR on
       merge to `main` (build-only on PRs)
-- [ ] Deploy `frontend-ts` + `backend-ts` to a real public URL (deferred until
-      hosting is chosen)
 
-**Done when**: CI is green on PRs, Docker images build (and push on `main`);
-public URL remains an open item.
-**Tag**: `v0.0.2` (CI/Docker); public URL can land as `v0.0.3`
+**Done when**: CI is green on `main` and Docker images build (and push).
+**Tag**: `v0.0.2`
+
+Public URL intentionally **not** part of Phase 0 — see Phase 8.
 
 ---
 
@@ -51,20 +55,23 @@ public URL remains an open item.
 **Goal**: the non-live-but-hard part — get route/rail geometry into a shape
 the frontend can render and vehicles can be snapped to.
 
-- [ ] `packages/geometry-ts`: script to pull LTA static Bus Routes + Bus Stops
-      datasets, join into per-service stop-sequence polylines
-- [ ] Script to extract MRT/LRT `route=subway`/`route=light_rail` relations
-      from an OSM Singapore `.pbf` (Overpass or Geofabrik), output GeoJSON
+- [x] `packages/geometry-ts`: scaffold + LTA bus extractor (needs
+      `LTA_ACCOUNT_KEY`; stop-to-stop polylines until OSM snap)
+- [x] Script to extract MRT/LRT `route=subway`/`route=light_rail` relations
+      via Overpass, output GeoJSON (+ copy into frontend `public/geometry`)
 - [ ] Manual spot-check of at least 3 rail lines against real alignment
-      (per DESIGN.md §7.4) — note any lines that need manual correction
-- [ ] Geometry build runs as a CI job on a schedule (weekly is plenty —
-      routes don't change often) and publishes versioned GeoJSON artifacts,
-      not something computed at request time
-- [ ] `web` renders static bus routes + rail lines as background layers
+      (per DESIGN.md §7.4) — see `packages/geometry-ts/SPOT_CHECKS.md`
+- [x] Geometry build runs as a scheduled GitHub Action (weekly) and commits
+      refreshed `rail.geojson` when it changes
+- [x] Frontend renders static rail lines as a background layer (bus layer
+      lights up automatically once `bus.geojson` exists)
 
 **Done when**: the map shows every bus route and MRT/LRT line as a static
 line layer, sourced from a reproducible, CI-run build step.
-**Tag**: `v0.1.0`
+**Tag**: `v0.1.0` (rail-only interim OK until DataMall key unlocks buses)
+
+**Next for you:** register at https://datamall.lta.gov.sg/ for an AccountKey,
+then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
 
 ---
 
@@ -189,3 +196,20 @@ now have enough moving parts that silent failures are easy to miss.
       earns its place, not before
 - [ ] Performance pass once all layers are live simultaneously: client-side
       culling, gateway broadcast batching, etc.
+
+---
+
+## Phase 8 — Public deploy (last)
+
+**Goal**: only after the map is something we’d stand behind — at minimum
+buses + scheduled/simulated MRT (Phase 3), ideally with planes/ships stable
+too — put it on a public URL.
+
+- [ ] Choose host (Cloudflare / Fly / Railway / etc.)
+- [ ] Deploy `frontend-ts` + `backend-ts` with real env/config
+- [ ] Confirm DataMall (and any other) licence terms for public redistribution
+- [ ] Smoke-test the live URL; keep a rollback path
+
+**Done when**: a public URL shows a product we’re willing to share, not a
+skeleton with fake dots.
+**Tag**: alongside or after `v1.0.0`, not before the core layers are solid.

@@ -1,0 +1,24 @@
+{
+  "name": "@sg-transport/geometry",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "sg-extract-rail": "./dist/extract-rail.js",
+    "sg-extract-bus": "./dist/extract-bus.js"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test src/**/*.test.ts",
+    "extract:rail": "tsx src/extract-rail.ts",
+    "extract:bus": "tsx src/extract-bus.ts"
+  },
+  "devDependencies": {
+    "@types/geojson": "^7946.0.16",
+    "@types/node": "^22.15.21",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}
