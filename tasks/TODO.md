@@ -102,9 +102,10 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
 - [ ] Snap Arrival GPS onto Routes polylines (Turf.js `nearestPointOnLine`)
 - [x] `backend-ts` fans out ingested bus positions over the existing WS channel
       (skeleton overlay; live GPS when keyed)
-- [ ] Integration test: poller → gateway → a test WS client receives a
-      well-formed `VehiclePosition[]` within N seconds of startup
+- [x] Integration test: poller-shaped ingest → gateway → WS client receives
+      well-formed `VehiclePosition[]` (see `apps/backend-ts/src/ingest.test.ts`)
 - [ ] CI: this test runs on every PR touching `bus-poller-ts` or `backend-ts`
+      (already covered by monorepo `pnpm test` once pushed)
 - [ ] Deploy behind a feature flag or just ship it — this is the first
       genuinely public-facing milestone
 

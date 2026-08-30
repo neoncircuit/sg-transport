@@ -37,6 +37,7 @@ data/*.pbf
 
 # Local LTA DataMall dumps (may be large / licence-sensitive)
 data/lta/**/*.json
+data/lta/**/*.xml
 !data/lta/README.md
 
 # Claude / Cursor local-only
