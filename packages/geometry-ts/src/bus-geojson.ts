@@ -1,10 +1,11 @@
-import type { Feature, FeatureCollection, LineString } from "geojson";
+import type { Feature, FeatureCollection, LineString, Point } from "geojson";
 
 export interface BusStop {
   BusStopCode: string;
   Latitude: number;
   Longitude: number;
   Description?: string;
+  RoadName?: string;
 }
 
 export interface BusRouteRow {
@@ -53,5 +54,24 @@ export function buildServiceLines(
     });
   }
 
+  return { type: "FeatureCollection", features };
+}
+
+/** Point features for every stop (map dots / debug). */
+export function buildStopPoints(stops: BusStop[]): FeatureCollection {
+  const features: Feature<Point>[] = stops.map((stop) => ({
+    type: "Feature",
+    properties: {
+      id: `stop-${stop.BusStopCode}`,
+      busStopCode: stop.BusStopCode,
+      description: stop.Description ?? "",
+      roadName: stop.RoadName ?? "",
+      source: "lta-datamall",
+    },
+    geometry: {
+      type: "Point",
+      coordinates: [stop.Longitude, stop.Latitude],
+    },
+  }));
   return { type: "FeatureCollection", features };
 }

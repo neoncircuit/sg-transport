@@ -92,8 +92,9 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
 - [x] JSON-first: fixtures for Arrival / Stops / Routes / Services; poller
       cascade `lta → fixture → skeleton` (local dumps = offline / key / API
       fallback) + geometry extract from `data/lta/`
-- [ ] Expand local dumps: full Stops↔Routes overlap (paginate `$skip`) so
-      `extract:bus` produces real polylines; more Arrival stop samples
+- [x] Expand local dumps: committed overlapping Victoria St fixtures so
+      `extract:bus` always yields polylines; falls back when `data/lta/` pages
+      don't overlap. Still want full island Stops↔Routes when keyed.
 - [ ] `services/bus-poller-ts`: poll LTA Bus Arrival, normalize to
       `VehiclePosition`, push into gateway's state store
 - [ ] Confirm actual API rate limit in practice (DESIGN.md §7.1) and design
