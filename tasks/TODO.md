@@ -122,14 +122,10 @@ map. This is the first version worth sharing.
 transport before touching anything non-essential. Ship the honest version of
 the train layer (DESIGN.md §4, option 3) before attempting anything fragile.
 
+- [x] `services/mrt-poller-ts`: simulate train positions along the Phase 1
+      rail geometry (headway/schedule refinement later); `isInferred: true`
 - [ ] Derive per-line headways and first/last train times from LTA static
-      data
-- [ ] `services/mrt-poller-ts`: simulate train positions along the Phase 1
-      rail geometry based on schedule + headway, not live data
-- [ ] Mark these positions `isInferred: true` (or add a `isSimulated` flag
-      if you want to distinguish "inferred from real data" vs "simulated
-      from schedule" later) so the frontend can visually flag them as
-      lower-confidence if desired
+      / GTFS data to replace constant speeds
 - [ ] CI/test pattern consistent with other pollers
 
 **Done when**: trains move on the map on a plausible schedule, clearly

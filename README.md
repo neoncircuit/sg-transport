@@ -32,7 +32,8 @@ apps/frontend-ts           MapLibre GL + Vite
 apps/backend-ts            WebSocket gateway + poller ingest
 packages/shared-types-ts   VehiclePosition contract
 packages/geometry-ts       OSM rail / LTA bus geometry extract
-services/bus-poller-ts     Skeleton fleet now; LTA when keyed
+services/bus-poller-ts     Skeleton/fixture fleet; LTA when keyed
+services/mrt-poller-ts     Simulated MRT/LRT along OSM rail geometry
 infra/docker/              Dockerfiles for gateway + poller
 .github/workflows/ci.yml   Lint, typecheck, test, build, Docker
 ```

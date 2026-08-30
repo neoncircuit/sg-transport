@@ -102,6 +102,25 @@ importers:
         specifier: ^5.8.3
         version: 5.9.3
 
+  services/mrt-poller-ts:
+    dependencies:
+      '@sg-transport/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types-ts
+    devDependencies:
+      '@types/geojson':
+        specifier: ^7946.0.16
+        version: 7946.0.16
+      '@types/node':
+        specifier: ^22.15.21
+        version: 22.20.1
+      tsx:
+        specifier: ^4.19.4
+        version: 4.23.12
+      typescript:
+        specifier: ^5.8.3
+        version: 5.9.3
+
 packages:
 
   '@esbuild/aix-ppc64@0.25.12':
