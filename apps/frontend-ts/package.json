@@ -13,10 +13,12 @@
   },
   "dependencies": {
     "@sg-transport/shared-types": "workspace:*",
+    "http-proxy": "^1.18.1",
     "maplibre-gl": "^5.6.0"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",
+    "@types/http-proxy": "^1.17.16",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "vite": "^6.3.5"

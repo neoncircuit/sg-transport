@@ -78,7 +78,13 @@ Details: [Data & geometry](./data-and-geometry.md).
 - Mobile-first controls (bottom sheet, locate, visibility-aware WS) —
   [`DESIGN.md` §11](../DESIGN.md).
 
-## What is not in v1
+## Local ports
+
+Preferred gateway port is **8787**. If it is taken, `backend-ts` binds
+8788, 8789, … and writes `.local/gateway.port`. Pollers call
+`waitForGatewayUrl()`; the Vite dev proxy reads that file on each request
+so `/ws` and `/health` follow the live port. Frontend Vite itself uses
+`strictPort: false` (5173 → next free).
 
 - Durable DB / historical archive (live-state only)
 - Redis (in-memory store is enough until multi-instance deploy)

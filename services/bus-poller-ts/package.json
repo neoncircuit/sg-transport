@@ -12,6 +12,7 @@
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "@sg-transport/ports": "workspace:*",
     "@sg-transport/shared-types": "workspace:*",
     "@turf/helpers": "^7.2.0",
     "@turf/nearest-point-on-line": "^7.2.0"

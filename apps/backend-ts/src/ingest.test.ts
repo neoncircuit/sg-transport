@@ -1,11 +1,12 @@
 import assert from "node:assert/strict";
+import { createServer } from "node:net";
 import { describe, it } from "node:test";
 import {
   isVehicleSnapshotMessage,
   type VehiclePosition,
 } from "@sg-transport/shared-types";
 import WebSocket from "ws";
-import { createGateway } from "./gateway.js";
+import { createGateway, listenGateway } from "./gateway.js";
 
 function bus(id: string): VehiclePosition {
   return {
@@ -18,9 +19,38 @@ function bus(id: string): VehiclePosition {
   };
 }
 
+describe("listenGateway port fallback", () => {
+  it("binds the next port when the preferred one is taken", async () => {
+    const blocker = createServer();
+    await new Promise<void>((resolve, reject) => {
+      blocker.once("error", reject);
+      blocker.listen(0, "127.0.0.1", () => resolve());
+    });
+    const addr = blocker.address();
+    assert.ok(addr && typeof addr !== "string");
+    const taken = addr.port;
+
+    const gateway = await listenGateway({
+      preferredPort: taken,
+      maxAttempts: 5,
+      tickMs: 60_000,
+    });
+    try {
+      assert.notEqual(gateway.port, taken);
+    } finally {
+      await gateway.close();
+      await new Promise<void>((resolve, reject) => {
+        blocker.close((err) => (err ? reject(err) : resolve()));
+      });
+    }
+  });
+});
+
 describe("ingest → websocket", () => {
   it("fans out poller vehicles to a WS client within a few seconds", async () => {
-    const gateway = await createGateway({ tickMs: 200, staleMs: 10_000 }).listen(0);
+    const gateway = await createGateway({ tickMs: 200, staleMs: 10_000 }).listen(
+      0,
+    );
     const base = `http://127.0.0.1:${gateway.port}`;
 
     try {

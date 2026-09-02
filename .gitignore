@@ -40,6 +40,9 @@ data/lta/**/*.json
 data/lta/**/*.xml
 !data/lta/README.md
 
+# Local runtime (chosen gateway port, etc.)
+.local/
+
 # Claude / Cursor local-only
 CLAUDE.local.md
 .claude/settings.local.json

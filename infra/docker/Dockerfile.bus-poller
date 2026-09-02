@@ -7,9 +7,11 @@ WORKDIR /app
 FROM base AS build
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
 COPY packages/shared-types-ts/package.json packages/shared-types-ts/
+COPY packages/ports-ts/package.json packages/ports-ts/
 COPY services/bus-poller-ts/package.json services/bus-poller-ts/
 RUN pnpm install --frozen-lockfile --filter @sg-transport/bus-poller...
 COPY packages/shared-types-ts packages/shared-types-ts
+COPY packages/ports-ts packages/ports-ts
 COPY services/bus-poller-ts services/bus-poller-ts
 RUN pnpm --filter @sg-transport/bus-poller... build \
   && pnpm --filter @sg-transport/bus-poller deploy --prod --legacy /out

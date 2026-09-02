@@ -12,6 +12,7 @@
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "@sg-transport/ports": "workspace:*",
     "@sg-transport/shared-types": "workspace:*",
     "ws": "^8.18.2"
   },

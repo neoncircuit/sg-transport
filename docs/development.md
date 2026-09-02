@@ -17,10 +17,14 @@ pnpm dev
 
 | URL | What |
 |---|---|
-| http://localhost:5173 | Map |
-| http://localhost:8787/health | Gateway health + active ingest sources |
-| `ws://localhost:8787/ws` | Vehicle snapshots |
-| `POST http://localhost:8787/ingest` | Poller → gateway (internal) |
+| http://localhost:5173 | Map (Vite; next free port if busy) |
+| http://localhost:8787/health | Gateway health (next free port if busy) |
+| `ws://…/ws` | Vehicle snapshots (via Vite proxy → bound gateway port) |
+| `POST …/ingest` | Poller → gateway (internal) |
+
+If 8787 (or 5173) is taken, the process binds the next free port. The gateway
+writes `.local/gateway.port`; pollers and the Vite proxy discover it
+automatically. Override with `PORT` / `GATEWAY_URL` if you need a fixed URL.
 
 `pnpm dev` runs workspace `dev` scripts in parallel (frontend, gateway,
 bus-poller, mrt-poller).
@@ -51,7 +55,9 @@ See [`.env.example`](../.env.example). Highlights:
 | Variable | Role |
 |---|---|
 | `LTA_ACCOUNT_KEY` | DataMall AccountKey (never commit) |
-| `GATEWAY_URL` | Poller → gateway base (default `http://127.0.0.1:8787`) |
+| `PORT` | Gateway preferred port (default 8787; falls forward if busy) |
+| `GATEWAY_URL` | Poller → gateway base (omit to auto-discover) |
+| `GATEWAY_PORT_FILE` | Override path for `.local/gateway.port` |
 | `BUS_SOURCE` | `auto` \| `fixture` \| `skeleton` \| `lta` |
 | `BUS_SNAP` | `0` disables route snap |
 | `LTA_DATA_DIR` | Override local dump root (default `data/lta`) |

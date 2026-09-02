@@ -3,13 +3,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { FeatureCollection } from "geojson";
 import type { VehiclePosition } from "@sg-transport/shared-types";
+import { waitForGatewayUrl } from "@sg-transport/ports";
 import {
   railLinesFromGeoJSON,
   seedTrains,
   tickTrains,
 } from "./simulate.js";
 
-const GATEWAY_URL = process.env.GATEWAY_URL ?? "http://127.0.0.1:8787";
 const POLL_MS = Number(process.env.POLL_MS ?? 1_000);
 const SOURCE_ID = "mrt-poller";
 
@@ -26,8 +26,11 @@ async function loadRail(): Promise<FeatureCollection> {
   return raw;
 }
 
-async function pushToGateway(vehicles: VehiclePosition[]): Promise<void> {
-  const res = await fetch(`${GATEWAY_URL}/ingest`, {
+async function pushToGateway(
+  gatewayUrl: string,
+  vehicles: VehiclePosition[],
+): Promise<void> {
+  const res = await fetch(`${gatewayUrl}/ingest`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ source: SOURCE_ID, vehicles }),
@@ -45,8 +48,10 @@ async function main(): Promise<void> {
     throw new Error("no LineString features in rail GeoJSON — run extract:rail");
   }
   const trains = seedTrains(lines);
+  console.log(`[mrt-poller] waiting for gateway…`);
+  const gatewayUrl = await waitForGatewayUrl();
   console.log(
-    `[mrt-poller] simulating ${trains.length} trains on ${lines.length} lines → ${GATEWAY_URL}`,
+    `[mrt-poller] simulating ${trains.length} trains on ${lines.length} lines → ${gatewayUrl}`,
   );
 
   let last = Date.now();
@@ -55,7 +60,7 @@ async function main(): Promise<void> {
     const dt = Math.min(5, (now - last) / 1000);
     last = now;
     const vehicles = tickTrains(trains, dt, now);
-    await pushToGateway(vehicles);
+    await pushToGateway(gatewayUrl, vehicles);
     console.log(`[mrt-poller] → gateway ${vehicles.length} trains`);
   }
 

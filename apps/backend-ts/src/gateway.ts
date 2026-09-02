@@ -3,6 +3,7 @@ import type {
   VehiclePosition,
   VehicleSnapshotMessage,
 } from "@sg-transport/shared-types";
+import { findFreePort } from "@sg-transport/ports";
 import { WebSocketServer, type WebSocket } from "ws";
 import { VehicleStore } from "./vehicle-store.js";
 
@@ -146,10 +147,14 @@ export function createGateway(options: GatewayOptions = {}): {
   let tickTimer: ReturnType<typeof setInterval> | undefined;
 
   return {
-    listen(port = 0): Promise<Gateway> {
-      return new Promise((resolve, reject) => {
-        server.once("error", reject);
+    async listen(port = 0): Promise<Gateway> {
+      return await new Promise<Gateway>((resolve, reject) => {
+        const onError = (err: Error) => {
+          reject(err);
+        };
+        server.once("error", onError);
         server.listen(port, "127.0.0.1", () => {
+          server.off("error", onError);
           const address = server.address();
           if (!address || typeof address === "string") {
             reject(new Error("expected TCP address"));
@@ -175,4 +180,46 @@ export function createGateway(options: GatewayOptions = {}): {
       });
     },
   };
+}
+
+/**
+ * Bind the preferred port, or the next free ports if it is taken.
+ * Prefer this over `listen(port)` for local `pnpm dev`.
+ */
+export async function listenGateway(
+  options: GatewayOptions & {
+    preferredPort?: number;
+    maxAttempts?: number;
+  } = {},
+): Promise<Gateway> {
+  const preferred = options.preferredPort ?? 8787;
+  const maxAttempts = options.maxAttempts ?? 20;
+
+  if (preferred === 0) {
+    return createGateway(options).listen(0);
+  }
+
+  let lastErr: unknown;
+  for (let i = 0; i < maxAttempts; i++) {
+    const port = await findFreePort(preferred + i, maxAttempts - i);
+    try {
+      if (port !== preferred) {
+        console.warn(
+          `[backend-ts] port ${preferred} in use, binding ${port}…`,
+        );
+      }
+      return await createGateway(options).listen(port);
+    } catch (err) {
+      lastErr = err;
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code !== "EADDRINUSE") throw err;
+      console.warn(
+        `[backend-ts] port ${port} raced busy, trying another…`,
+      );
+    }
+  }
+
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error(`could not bind gateway near port ${preferred}`);
 }
