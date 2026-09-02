@@ -16,6 +16,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Need full history + tags for `git describe` versioning.
+          fetch-depth: 0
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -31,6 +34,11 @@ jobs:
       - name: Install
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve app version
+        run: |
+          echo "APP_VERSION=$(node scripts/app-version.mjs)" >> "$GITHUB_ENV"
+          echo "GIT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
+
       - name: Lint
         run: pnpm lint
 
@@ -42,6 +50,9 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+          GIT_SHA: ${{ env.GIT_SHA }}
 
   docker:
     name: Docker images
@@ -53,6 +64,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -70,6 +83,8 @@ jobs:
         run: |
           owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')
           echo "prefix=ghcr.io/${owner}/sg-transport" >> "$GITHUB_OUTPUT"
+          echo "APP_VERSION=$(node scripts/app-version.mjs)" >> "$GITHUB_ENV"
+          echo "GIT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
       - name: Build backend-ts
         uses: docker/build-push-action@v6
@@ -77,6 +92,9 @@ jobs:
           context: .
           file: infra/docker/Dockerfile.backend
           push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          build-args: |
+            APP_VERSION=${{ env.APP_VERSION }}
+            GIT_SHA=${{ env.GIT_SHA }}
           tags: |
             ${{ steps.meta.outputs.prefix }}-backend:latest
             ${{ steps.meta.outputs.prefix }}-backend:${{ github.sha }}

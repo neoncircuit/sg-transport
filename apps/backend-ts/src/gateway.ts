@@ -10,6 +10,9 @@ import { VehicleStore } from "./vehicle-store.js";
 export interface GatewayOptions {
   staleMs?: number;
   tickMs?: number;
+  /** From git describe / APP_VERSION — shown on /health. */
+  version?: string;
+  gitSha?: string;
 }
 
 export interface Gateway {
@@ -51,6 +54,8 @@ export function createGateway(options: GatewayOptions = {}): {
 } {
   const staleMs = options.staleMs ?? Number(process.env.INGEST_STALE_MS ?? 30_000);
   const tickMs = options.tickMs ?? Number(process.env.TICK_MS ?? 1000);
+  const version = options.version ?? process.env.APP_VERSION?.trim() ?? "0.0.0-dev";
+  const gitSha = options.gitSha ?? process.env.GIT_SHA?.trim() ?? "unknown";
   const store = new VehicleStore(staleMs);
   const clients = new Set<WebSocket>();
 
@@ -114,6 +119,8 @@ export function createGateway(options: GatewayOptions = {}): {
       res.end(
         JSON.stringify({
           ok: true,
+          version,
+          gitSha,
           clients: clients.size,
           phase: "2-skeleton",
           sources: store.activeSources(),

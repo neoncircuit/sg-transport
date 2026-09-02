@@ -7,7 +7,8 @@
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
-    "test": "turbo run test",
+    "test": "turbo run test && node --test scripts/app-version.test.mjs",
+    "version:print": "node scripts/app-version.mjs",
     "extract:rail": "pnpm --filter @sg-transport/geometry extract:rail",
     "extract:bus": "pnpm --filter @sg-transport/geometry extract:bus"
   },

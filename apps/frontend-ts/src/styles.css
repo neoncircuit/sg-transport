@@ -239,8 +239,8 @@ body {
   flex-shrink: 0;
   font-size: 0.65rem;
   font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
   color: var(--muted);
   border: 1px solid color-mix(in srgb, var(--muted) 45%, transparent);
   border-radius: 0.2rem;

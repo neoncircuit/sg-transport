@@ -3,6 +3,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import httpProxy from "http-proxy";
 import { defineConfig, type Plugin } from "vite";
+import {
+  formatVersionBadge,
+  resolveAppVersion,
+  resolveGitSha,
+} from "../../scripts/app-version.mjs";
 
 function findRepoRoot(start: string): string {
   let dir = path.resolve(start);
@@ -15,6 +20,9 @@ function findRepoRoot(start: string): string {
 }
 
 const repoRoot = findRepoRoot(path.dirname(fileURLToPath(import.meta.url)));
+const appVersion = resolveAppVersion(repoRoot);
+const gitSha = resolveGitSha(repoRoot);
+const versionBadge = formatVersionBadge(appVersion);
 
 function gatewayHttpTarget(): string {
   const file =
@@ -68,6 +76,11 @@ function gatewayProxyPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [gatewayProxyPlugin()],
+  define: {
+    __APP_VERSION__: JSON.stringify(appVersion),
+    __APP_VERSION_BADGE__: JSON.stringify(versionBadge),
+    __GIT_SHA__: JSON.stringify(gitSha),
+  },
   server: {
     port: 5173,
     // If 5173 is taken, try 5174, 5175, … (Vite default; set explicitly).

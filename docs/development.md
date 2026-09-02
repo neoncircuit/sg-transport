@@ -29,6 +29,22 @@ automatically. Override with `PORT` / `GATEWAY_URL` if you need a fixed URL.
 `pnpm dev` runs workspace `dev` scripts in parallel (frontend, gateway,
 bus-poller, mrt-poller).
 
+## Versioning
+
+Versions follow the phase tags in [`tasks/TODO.md`](../tasks/TODO.md)
+(`v0.0.1`, `v0.0.2`, `v0.1.0`, `v0.2.0`, …). Between tags, the running app
+uses **`git describe --tags --always --dirty`** (for example
+`v0.1.0-8-gdee598f`).
+
+| Surface | What you see |
+|---|---|
+| Map badge | Compact form (`v0.1.0` or `v0.1.0+8`); hover for full describe + SHA |
+| `GET /health` | `version` + `gitSha` fields |
+| CLI | `pnpm version:print` (or `--json`) |
+
+Override with `APP_VERSION` / `GIT_SHA` in CI or Docker images that have no
+`.git` directory. Tag a phase only when its “Done when” criteria are met.
+
 ## Useful scripts
 
 | Command | Purpose |
@@ -38,6 +54,7 @@ bus-poller, mrt-poller).
 | `pnpm lint` | Lint (currently typecheck-backed where configured) |
 | `pnpm test` | Unit / integration tests |
 | `pnpm build` | Production builds |
+| `pnpm version:print` | Print `git describe` / `APP_VERSION` |
 | `pnpm extract:rail` | OSM MRT/LRT → GeoJSON |
 | `pnpm extract:bus` | Bus lines + stops → GeoJSON |
 
@@ -55,6 +72,8 @@ See [`.env.example`](../.env.example). Highlights:
 | Variable | Role |
 |---|---|
 | `LTA_ACCOUNT_KEY` | DataMall AccountKey (never commit) |
+| `APP_VERSION` | Override `git describe` (CI / Docker) |
+| `GIT_SHA` | Override short SHA in `/health` and badge tooltip |
 | `PORT` | Gateway preferred port (default 8787; falls forward if busy) |
 | `GATEWAY_URL` | Poller → gateway base (omit to auto-discover) |
 | `GATEWAY_PORT_FILE` | Override path for `.local/gateway.port` |

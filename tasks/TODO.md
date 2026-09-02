@@ -8,7 +8,8 @@ if it does, that's a sign the phase boundary is in the wrong place.
 Tag convention: `vMAJOR.MINOR.0` per phase completion, e.g. `v0.1.0` after
 Phase 1. Stay on `0.x` until the MRT layer has at least the scheduled/
 simulated fallback live (Phase 3 / `v0.3.0`) — that's the point this stops
-being a demo.
+being a demo. The UI badge and `GET /health` show `git describe` against
+these tags (see `scripts/app-version.mjs` / `pnpm version:print`).
 
 **Public deploy is last.** Keep iterating locally (and via CI/Docker) until
 the core product is trustworthy. Do not put a half-finished map on a public

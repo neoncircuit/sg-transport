@@ -28,10 +28,16 @@ const sheetBodyEl = document.querySelector<HTMLElement>("#sheet-body");
 const sheetToggleEl = document.querySelector<HTMLButtonElement>("#sheet-toggle");
 const locateBtn = document.querySelector<HTMLButtonElement>("#locate-btn");
 const handleLabel = document.querySelector<HTMLElement>(".sheet-handle-label");
+const versionBadgeEl = document.querySelector<HTMLElement>("#version-badge");
 
 let activeTheme: ThemeDefinition = applyTheme(readStoredTheme());
 let latestVehicles: VehiclePosition[] = [];
 let socket: VehicleSocket | null = null;
+
+if (versionBadgeEl) {
+  versionBadgeEl.textContent = __APP_VERSION_BADGE__;
+  versionBadgeEl.title = `${__APP_VERSION__} (${__GIT_SHA__})`;
+}
 
 function setStatus(text: string, live = false): void {
   if (!statusEl) return;
