@@ -162,6 +162,10 @@ export function createGateway(options: GatewayOptions = {}): {
         server.once("error", onError);
         server.listen(port, "127.0.0.1", () => {
           server.off("error", onError);
+          // Large ingest POSTs from pollers (hundreds of vehicles) should not
+          // be killed by tight header/request timeouts on a quiet socket.
+          server.headersTimeout = 60_000;
+          server.requestTimeout = 120_000;
           const address = server.address();
           if (!address || typeof address === "string") {
             reject(new Error("expected TCP address"));

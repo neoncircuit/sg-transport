@@ -18,19 +18,49 @@ function pollIntervalMs(): number {
   return 2_000;
 }
 
+async function sleep(ms: number): Promise<void> {
+  await new Promise((r) => setTimeout(r, ms));
+}
+
 async function pushToGateway(
   gatewayUrl: string,
   vehicles: Awaited<ReturnType<typeof collectVehicles>>["vehicles"],
 ): Promise<void> {
-  const res = await fetch(`${gatewayUrl}/ingest`, {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify({ source: SOURCE_ID, vehicles }),
-  });
-  if (!res.ok && res.status !== 204) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`ingest ${res.status}: ${text}`);
+  const body = JSON.stringify({ source: SOURCE_ID, vehicles });
+  const attempts = 3;
+  let lastErr: unknown;
+
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const res = await fetch(`${gatewayUrl}/ingest`, {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          connection: "close",
+        },
+        body,
+        // Avoid keep-alive sockets that WSL/Windows sometimes reset mid-body.
+        keepalive: false,
+        signal: AbortSignal.timeout(30_000),
+      });
+      if (!res.ok && res.status !== 204) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`ingest ${res.status}: ${text}`);
+      }
+      return;
+    } catch (err) {
+      lastErr = err;
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `[bus-poller] ingest attempt ${i + 1}/${attempts} failed (${msg})`,
+      );
+      await sleep(250 * (i + 1));
+    }
   }
+
+  throw lastErr instanceof Error
+    ? lastErr
+    : new Error(`ingest failed after ${attempts} attempts`);
 }
 
 async function main(): Promise<void> {
@@ -63,7 +93,11 @@ async function main(): Promise<void> {
     );
   }
 
-  await tick();
+  // Never exit on a single bad tick — `--watch` would sit idle until a file change.
+  void tick().catch((err: unknown) => {
+    console.error("[bus-poller] tick failed", err);
+  });
+
   const timer = setInterval(() => {
     void tick().catch((err: unknown) => {
       console.error("[bus-poller] tick failed", err);
