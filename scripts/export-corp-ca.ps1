@@ -42,7 +42,8 @@ try {
 
   ($pemParts -join "`r`n`r`n") + "`r`n" | Set-Content -Path $outFile -Encoding ascii
   Write-Host "Wrote $($pemParts.Count) cert(s) to $outFile"
-  Write-Host "Set NODE_EXTRA_CA_CERTS=$outFile (or add to .env) before pnpm / node."
+  Write-Host "Add to .env (repo-relative, works in Windows and WSL):"
+  Write-Host "  NODE_EXTRA_CA_CERTS=.local/corp-ca.pem"
 }
 finally {
   $tcp.Close()

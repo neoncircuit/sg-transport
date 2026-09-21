@@ -26,8 +26,14 @@ If 8787 (or 5173) is taken, the process binds the next free port. The gateway
 writes `.local/gateway.port`; pollers and the Vite proxy discover it
 automatically. Override with `PORT` / `GATEWAY_URL` if you need a fixed URL.
 
-`pnpm dev` runs workspace `dev` scripts in parallel (frontend, gateway,
-bus-poller, mrt-poller).
+`pnpm dev` runs a small bootstrap (`scripts/dev.mjs`) that:
+
+1. Loads `.env` and remaps `NODE_EXTRA_CA_CERTS` for WSL if needed  
+2. Heals native deps (`esbuild` / `rollup`) when `node_modules` was installed
+   on another OS (common Windows ↔ WSL share on `/mnt/d`)  
+3. Starts turbo (`persistent` tasks — no deprecated `--parallel`)
+
+Skip the heal with `SKIP_NATIVE_ENSURE=1`. Force it with `pnpm ensure:native`.
 
 ## Versioning
 
@@ -106,7 +112,7 @@ docker build -f infra/docker/Dockerfile.bus-poller -t sg-transport-bus-poller .
 docker run --rm -p 8787:8787 sg-transport-backend
 ```
 
-## Windows notes
+## Windows / WSL notes
 
 Corporate TLS / antivirus can break `pnpm install`, Overpass, DataMall
 (`UNABLE_TO_VERIFY_LEAF_SIGNATURE`), or `git add` into `.git/objects`. Prefer
@@ -117,11 +123,25 @@ PowerShell/browsers but fails in Node:
 
 ```powershell
 powershell -File scripts/export-corp-ca.ps1
-# then in .env:
-# NODE_EXTRA_CA_CERTS=D:/GitHub/sg-transport/.local/corp-ca.pem
+# then in .env (repo-relative — works in Windows and WSL):
+# NODE_EXTRA_CA_CERTS=.local/corp-ca.pem
 ```
 
 Do not set `NODE_TLS_REJECT_UNAUTHORIZED=0` permanently.
+
+**Windows ↔ WSL:** the repo on `/mnt/d/...` shares one `node_modules`. Native
+packages (`esbuild`, `rollup`) are OS-specific. After switching OS, `pnpm dev`
+should detect the skew and run `pnpm install --force` automatically. If it
+still fails, from the environment you want to use:
+
+```bash
+rm -rf node_modules
+pnpm install
+pnpm dev
+```
+
+Prefer developing in **one** environment (Windows *or* WSL), not both against
+the same tree, when you can.
 
 ## Next reading
 

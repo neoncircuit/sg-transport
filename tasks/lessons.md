@@ -38,6 +38,11 @@ short and actionable.
   `NODE_EXTRA_CA_CERTS` over leaving `strict-ssl false` permanently. Git
   also intermittently failed writing `.git/objects` (permission denied) —
   retry after a short pause; likely AV/indexer locking.
+- **Windows ↔ WSL shares one `node_modules`:** installing on Windows then
+  running under WSL (`/mnt/d/...`) leaves `@esbuild/win32-x64` while Linux
+  needs `@esbuild/linux-x64` (same for rollup). `scripts/dev.mjs` now
+  detects that and runs `pnpm install --force`. Prefer one OS per checkout
+  when possible; keep `NODE_EXTRA_CA_CERTS=.local/corp-ca.pem` (relative).
 
 ### Product / data (carry forward)
 
