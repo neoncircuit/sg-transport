@@ -56,8 +56,10 @@ async function main(): Promise<void> {
     const result = await collectVehicles();
     await pushToGateway(gatewayUrl, result.vehicles);
     const note = result.reason ? ` — ${result.reason}` : "";
+    const polled =
+      result.stopsPolled !== undefined ? ` · ${result.stopsPolled} stops` : "";
     console.log(
-      `[bus-poller] ${result.mode} → gateway ${result.vehicles.length} buses (${gatewayUrl})${note}`,
+      `[bus-poller] ${result.mode} → gateway ${result.vehicles.length} buses${polled} (${gatewayUrl})${note}`,
     );
   }
 

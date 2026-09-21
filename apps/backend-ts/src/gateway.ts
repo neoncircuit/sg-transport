@@ -122,7 +122,7 @@ export function createGateway(options: GatewayOptions = {}): {
           version,
           gitSha,
           clients: clients.size,
-          phase: "2-skeleton",
+          phase: "2-live",
           sources: store.activeSources(),
         }),
       );

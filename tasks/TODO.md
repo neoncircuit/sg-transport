@@ -99,12 +99,13 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
       under `data/lta/` (gitignored).
 - [x] Snap Arrival GPS onto Routes polylines (Turf.js `nearestPointOnLine`);
       west corridor fixture aligns sample Arrival GPS for offline demos
-- [x] Poll schedule scaffold: 20s cadence + hot/normal tier round-robin
-      (`schedule.ts`) ready for the live Arrival client
+- [x] Poll schedule: 20s cadence + CBD hot / island normal tiers + parallel
+      Arrival fetches (`schedule.ts` / `lta.ts`); default budget 40 (~173k/day)
 - [x] `services/bus-poller-ts`: poll LTA Bus Arrival live (AccountKey +
       corporate TLS via `NODE_EXTRA_CA_CERTS`); expand stop set via full-island
       `extract:bus` dumps
-- [ ] Confirm actual API rate limit in practice and tune `planArrivalPoll` budget
+- [x] Confirm API call budget stays under ToS ceiling (~10M/day) with defaults;
+      tune via `LTA_ARRIVAL_BUDGET` / `LTA_HOT_STOPS` as needed
 - [x] `backend-ts` fans out ingested bus positions over the existing WS channel
       (skeleton overlay; live GPS when keyed)
 - [x] Integration test: poller-shaped ingest → gateway → WS client receives
@@ -116,7 +117,7 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
 
 **Done when**: real, live Singapore buses are visibly moving on the public
 map. This is the first version worth sharing.
-**Tag**: `v0.2.0`
+**Tag**: `v0.2.0` (local tag after live Arrival + island geometry)
 
 ---
 

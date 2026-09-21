@@ -74,7 +74,8 @@ See [`.env.example`](../.env.example). Highlights:
 | `LTA_ACCOUNT_KEY` | DataMall AccountKey (never commit) |
 | `LTA_BUS_STOPS` | Comma-separated stop codes to poll (else `bus-stops.geojson`) |
 | `LTA_HOT_STOPS` | Prefer these in the Arrival round-robin |
-| `LTA_ARRIVAL_BUDGET` | Max Arrival API calls per poll cycle (default 12) |
+| `LTA_ARRIVAL_BUDGET` | Max Arrival API calls per poll cycle (default 40) |
+| `LTA_ARRIVAL_CONCURRENCY` | Parallel Arrival fetches per cycle (default 8) |
 | `NODE_EXTRA_CA_CERTS` | PEM path for corporate TLS roots (Windows MITM) |
 | `APP_VERSION` | Override `git describe` (CI / Docker) |
 | `GIT_SHA` | Override short SHA in `/health` and badge tooltip |

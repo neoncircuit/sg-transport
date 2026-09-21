@@ -9,7 +9,10 @@ import {
 } from "./normalize.js";
 import {
   ARRIVAL_UPDATE_MS,
+  DEFAULT_ARRIVAL_BUDGET,
   classifyStops,
+  classifyStopsFromGeoJSON,
+  estimateDailyArrivalCalls,
   planArrivalPoll,
 } from "./schedule.js";
 import { SkeletonBusSource } from "./skeleton.js";
@@ -150,6 +153,48 @@ describe("planArrivalPoll", () => {
     assert.equal(first.plan.stops.length, 2);
     assert.ok(first.plan.stops.includes("A"));
     assert.equal(first.plan.nextDelayMs, ARRIVAL_UPDATE_MS);
+  });
+});
+
+describe("estimateDailyArrivalCalls", () => {
+  it("matches 20s cadence math for the default budget", () => {
+    assert.equal(
+      estimateDailyArrivalCalls(DEFAULT_ARRIVAL_BUDGET),
+      Math.floor((86_400_000 / ARRIVAL_UPDATE_MS) * DEFAULT_ARRIVAL_BUDGET),
+    );
+  });
+});
+
+describe("classifyStopsFromGeoJSON", () => {
+  it("marks CBD points hot and skips W00x fixtures", () => {
+    const fc: FeatureCollection = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: { busStopCode: "01012" },
+          geometry: { type: "Point", coordinates: [103.85, 1.29] },
+        },
+        {
+          type: "Feature",
+          properties: { busStopCode: "45009" },
+          geometry: { type: "Point", coordinates: [103.75, 1.35] },
+        },
+        {
+          type: "Feature",
+          properties: { busStopCode: "W001" },
+          geometry: { type: "Point", coordinates: [103.85, 1.29] },
+        },
+      ],
+    };
+    const scheduled = classifyStopsFromGeoJSON(fc);
+    assert.deepEqual(
+      scheduled.map((s) => [s.busStopCode, s.tier]),
+      [
+        ["01012", "hot"],
+        ["45009", "normal"],
+      ],
+    );
   });
 });
 

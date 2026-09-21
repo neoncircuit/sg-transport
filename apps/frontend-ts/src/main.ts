@@ -39,6 +39,17 @@ if (versionBadgeEl) {
   versionBadgeEl.title = `${__APP_VERSION__} (${__GIT_SHA__})`;
 }
 
+function fleetStatusLabel(vehicles: VehiclePosition[]): string {
+  const live = vehicles.filter((v) => !v.isInferred).length;
+  const inferred = vehicles.length - live;
+  if (vehicles.length === 0) return "No vehicles · waiting";
+  if (live > 0 && inferred > 0) {
+    return `${live} live · ${inferred} inferred · updating`;
+  }
+  if (live > 0) return `${live} live · updating`;
+  return `${inferred} inferred · updating`;
+}
+
 function setStatus(text: string, live = false): void {
   if (!statusEl) return;
   statusEl.textContent = text;
@@ -185,7 +196,7 @@ map.on("load", () => {
       latestVehicles = vehicles;
       updateVehicles(map, vehicles, activeTheme);
       updateLegend(vehicles);
-      setStatus(`${vehicles.length} simulated · updating`, true);
+      setStatus(fleetStatusLabel(vehicles), true);
     },
     (status) => {
       switch (status) {

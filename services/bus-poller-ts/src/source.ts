@@ -49,9 +49,11 @@ function hasLtaKey(): boolean {
   return Boolean(process.env.LTA_ACCOUNT_KEY?.trim());
 }
 
-async function pollLta(): Promise<VehiclePosition[]> {
-  const { vehicles } = await pollLiveArrivals();
-  return vehicles;
+async function pollLta(): Promise<{
+  vehicles: VehiclePosition[];
+  stopsPolled: number;
+}> {
+  return pollLiveArrivals();
 }
 
 /**
@@ -65,13 +67,19 @@ async function pollLta(): Promise<VehiclePosition[]> {
  */
 export async function collectVehicles(
   requested: string = process.env.BUS_SOURCE ?? "auto",
-): Promise<{ mode: SourceMode; vehicles: VehiclePosition[]; reason?: string }> {
+): Promise<{
+  mode: SourceMode;
+  vehicles: VehiclePosition[];
+  reason?: string;
+  stopsPolled?: number;
+}> {
   const mode = requested.toLowerCase();
 
   async function finish(result: {
     mode: SourceMode;
     vehicles: VehiclePosition[];
     reason?: string;
+    stopsPolled?: number;
   }) {
     return {
       ...result,
@@ -99,13 +107,22 @@ export async function collectVehicles(
     if (!hasLtaKey()) {
       throw new Error("BUS_SOURCE=lta requires LTA_ACCOUNT_KEY");
     }
-    return finish({ mode: "lta", vehicles: await pollLta() });
+    const live = await pollLta();
+    return finish({
+      mode: "lta",
+      vehicles: live.vehicles,
+      stopsPolled: live.stopsPolled,
+    });
   }
 
   if (hasLtaKey()) {
     try {
-      const vehicles = await pollLta();
-      return finish({ mode: "lta", vehicles });
+      const live = await pollLta();
+      return finish({
+        mode: "lta",
+        vehicles: live.vehicles,
+        stopsPolled: live.stopsPolled,
+      });
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
       if (await hasArrivalFixtures()) {

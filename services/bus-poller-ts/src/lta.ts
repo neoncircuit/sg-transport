@@ -9,8 +9,13 @@ import {
 } from "./normalize.js";
 import {
   ARRIVAL_UPDATE_MS,
+  DEFAULT_ARRIVAL_BUDGET,
+  DEFAULT_ARRIVAL_CONCURRENCY,
   classifyStops,
+  classifyStopsFromGeoJSON,
+  estimateDailyArrivalCalls,
   planArrivalPoll,
+  type ScheduledStop,
 } from "./schedule.js";
 
 const DEFAULT_BASE =
@@ -23,6 +28,7 @@ const DEFAULT_STOPS_GEOJSON = path.resolve(
 );
 
 let pollCursor = 0;
+let loggedBudgetOnce = false;
 
 function datamallBase(): string {
   return (
@@ -37,8 +43,17 @@ function accountKey(): string {
 }
 
 function arrivalBudget(): number {
-  const n = Number(process.env.LTA_ARRIVAL_BUDGET ?? 12);
-  return Number.isFinite(n) && n > 0 ? Math.floor(n) : 12;
+  const n = Number(process.env.LTA_ARRIVAL_BUDGET ?? DEFAULT_ARRIVAL_BUDGET);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_ARRIVAL_BUDGET;
+}
+
+function arrivalConcurrency(): number {
+  const n = Number(
+    process.env.LTA_ARRIVAL_CONCURRENCY ?? DEFAULT_ARRIVAL_CONCURRENCY,
+  );
+  return Number.isFinite(n) && n > 0
+    ? Math.floor(n)
+    : DEFAULT_ARRIVAL_CONCURRENCY;
 }
 
 function isArrivalPayload(value: unknown): value is LtaBusArrivalResponse {
@@ -62,14 +77,17 @@ export function stopCodesFromGeoJSON(fc: FeatureCollection): string[] {
   return codes;
 }
 
+function parseCodeList(raw: string | undefined): string[] {
+  if (!raw?.trim()) return [];
+  return raw
+    .split(/[,;\s]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 export async function resolveStopCodes(): Promise<string[]> {
-  const fromEnv = process.env.LTA_BUS_STOPS?.trim();
-  if (fromEnv) {
-    return fromEnv
-      .split(/[,;\s]+/)
-      .map((s) => s.trim())
-      .filter(Boolean);
-  }
+  const fromEnv = parseCodeList(process.env.LTA_BUS_STOPS);
+  if (fromEnv.length > 0) return fromEnv;
 
   const file = process.env.BUS_STOPS_GEOJSON?.trim() || DEFAULT_STOPS_GEOJSON;
   try {
@@ -80,8 +98,30 @@ export async function resolveStopCodes(): Promise<string[]> {
     // fall through
   }
 
-  // Sensible CBD defaults if geometry is missing.
   return ["01012", "01013", "01019", "01029"];
+}
+
+async function resolveScheduledStops(): Promise<ScheduledStop[]> {
+  const file = process.env.BUS_STOPS_GEOJSON?.trim() || DEFAULT_STOPS_GEOJSON;
+  const hotOverride = parseCodeList(process.env.LTA_HOT_STOPS);
+  const codeOverride = parseCodeList(process.env.LTA_BUS_STOPS);
+
+  if (codeOverride.length > 0) {
+    return classifyStops(codeOverride, hotOverride);
+  }
+
+  try {
+    const fc = JSON.parse(await readFile(file, "utf8")) as FeatureCollection;
+    const scheduled = classifyStopsFromGeoJSON(fc, { hotOverride });
+    if (scheduled.length > 0) return scheduled;
+  } catch {
+    // fall through
+  }
+
+  return classifyStops(
+    ["01012", "01013", "01019", "01029"],
+    hotOverride.length > 0 ? hotOverride : ["01012", "01013"],
+  );
 }
 
 export async function fetchBusArrival(
@@ -109,6 +149,26 @@ export async function fetchBusArrival(
   return json;
 }
 
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (next < items.length) {
+        const i = next++;
+        results[i] = await fn(items[i]!);
+      }
+    },
+  );
+  await Promise.all(workers);
+  return results;
+}
+
 /**
  * Poll a budgeted slice of stops (20s cadence helpers in schedule.ts).
  * Dedupes vehicles by id across stops (same bus can appear at multiple).
@@ -116,27 +176,33 @@ export async function fetchBusArrival(
 export async function pollLiveArrivals(
   now = Date.now(),
 ): Promise<{ vehicles: VehiclePosition[]; stopsPolled: number }> {
-  const codes = await resolveStopCodes();
-  const hot = (process.env.LTA_HOT_STOPS?.trim() || "01012,01013")
-    .split(/[,;\s]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  const scheduled = classifyStops(codes, hot);
+  const budget = arrivalBudget();
+  const concurrency = arrivalConcurrency();
+  const scheduled = await resolveScheduledStops();
   const { plan, nextCursor } = planArrivalPoll(
     scheduled,
     pollCursor,
-    arrivalBudget(),
+    budget,
   );
   pollCursor = nextCursor;
 
+  if (!loggedBudgetOnce) {
+    loggedBudgetOnce = true;
+    const hot = scheduled.filter((s) => s.tier === "hot").length;
+    console.log(
+      `[bus-poller] Arrival budget=${budget}/cycle concurrency=${concurrency} ` +
+        `(~${estimateDailyArrivalCalls(budget)} calls/day) · ` +
+        `${scheduled.length} stops (${hot} hot)`,
+    );
+  }
+
+  const payloads = await mapPool(plan.stops, concurrency, (code) =>
+    fetchBusArrival(code),
+  );
+
   const vehicles: VehiclePosition[] = [];
   const seen = new Set<string>();
-  let stopsPolled = 0;
-
-  // Sequential to stay polite on the API; budget is small.
-  for (const code of plan.stops) {
-    const payload = await fetchBusArrival(code);
-    stopsPolled += 1;
+  for (const payload of payloads) {
     for (const v of normalizeBusArrival(payload, now)) {
       if (seen.has(v.id)) continue;
       seen.add(v.id);
@@ -144,7 +210,7 @@ export async function pollLiveArrivals(
     }
   }
 
-  return { vehicles, stopsPolled };
+  return { vehicles, stopsPolled: plan.stops.length };
 }
 
 export { ARRIVAL_UPDATE_MS };
