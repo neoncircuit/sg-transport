@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import type { FeatureCollection } from "geojson";
 import { vehiclesFromArrivalFixtures } from "./fixture.js";
+import { stopCodesFromGeoJSON } from "./lta.js";
 import {
   normalizeBusArrival,
   type LtaBusArrivalResponse,
@@ -149,5 +150,26 @@ describe("planArrivalPoll", () => {
     assert.equal(first.plan.stops.length, 2);
     assert.ok(first.plan.stops.includes("A"));
     assert.equal(first.plan.nextDelayMs, ARRIVAL_UPDATE_MS);
+  });
+});
+
+describe("stopCodesFromGeoJSON", () => {
+  it("skips west-corridor fixture W00x codes", () => {
+    const fc: FeatureCollection = {
+      type: "FeatureCollection",
+      features: [
+        {
+          type: "Feature",
+          properties: { busStopCode: "01012" },
+          geometry: { type: "Point", coordinates: [103.85, 1.29] },
+        },
+        {
+          type: "Feature",
+          properties: { busStopCode: "W001" },
+          geometry: { type: "Point", coordinates: [103.75, 1.31] },
+        },
+      ],
+    };
+    assert.deepEqual(stopCodesFromGeoJSON(fc), ["01012"]);
   });
 });

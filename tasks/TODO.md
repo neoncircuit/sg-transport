@@ -100,7 +100,9 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
       west corridor fixture aligns sample Arrival GPS for offline demos
 - [x] Poll schedule scaffold: 20s cadence + hot/normal tier round-robin
       (`schedule.ts`) ready for the live Arrival client
-- [ ] `services/bus-poller-ts`: poll LTA Bus Arrival live (needs AccountKey)
+- [x] `services/bus-poller-ts`: poll LTA Bus Arrival live (AccountKey +
+      corporate TLS via `NODE_EXTRA_CA_CERTS`); expand stop set via full-island
+      `extract:bus` dumps
 - [ ] Confirm actual API rate limit in practice and tune `planArrivalPoll` budget
 - [x] `backend-ts` fans out ingested bus positions over the existing WS channel
       (skeleton overlay; live GPS when keyed)

@@ -7,6 +7,7 @@ import {
   hasArrivalFixtures,
   vehiclesFromArrivalFixtures,
 } from "./fixture.js";
+import { pollLiveArrivals } from "./lta.js";
 import { SkeletonBusSource } from "./skeleton.js";
 import { linesFromGeoJSON, snapVehiclesToRoutes } from "./snap.js";
 
@@ -49,8 +50,8 @@ function hasLtaKey(): boolean {
 }
 
 async function pollLta(): Promise<VehiclePosition[]> {
-  // Live client lands when AccountKey access is granted.
-  throw new Error("LTA live client not wired yet");
+  const { vehicles } = await pollLiveArrivals();
+  return vehicles;
 }
 
 /**

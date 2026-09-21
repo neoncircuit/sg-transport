@@ -12,8 +12,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "node --import tsx --test src/**/*.test.ts",
-    "extract:rail": "tsx src/extract-rail.ts",
-    "extract:bus": "tsx src/extract-bus.ts"
+    "extract:rail": "node ../../scripts/with-repo-env.mjs tsx src/extract-rail.ts",
+    "extract:bus": "node ../../scripts/with-repo-env.mjs tsx src/extract-bus.ts"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

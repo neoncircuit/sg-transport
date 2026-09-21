@@ -72,6 +72,10 @@ See [`.env.example`](../.env.example). Highlights:
 | Variable | Role |
 |---|---|
 | `LTA_ACCOUNT_KEY` | DataMall AccountKey (never commit) |
+| `LTA_BUS_STOPS` | Comma-separated stop codes to poll (else `bus-stops.geojson`) |
+| `LTA_HOT_STOPS` | Prefer these in the Arrival round-robin |
+| `LTA_ARRIVAL_BUDGET` | Max Arrival API calls per poll cycle (default 12) |
+| `NODE_EXTRA_CA_CERTS` | PEM path for corporate TLS roots (Windows MITM) |
 | `APP_VERSION` | Override `git describe` (CI / Docker) |
 | `GIT_SHA` | Override short SHA in `/health` and badge tooltip |
 | `PORT` | Gateway preferred port (default 8787; falls forward if busy) |
@@ -103,9 +107,20 @@ docker run --rm -p 8787:8787 sg-transport-backend
 
 ## Windows notes
 
-Corporate TLS / antivirus can break `pnpm install`, Overpass, or
-`git add` into `.git/objects`. Prefer retrying failed adds file-by-file;
-never commit secrets to work around TLS.
+Corporate TLS / antivirus can break `pnpm install`, Overpass, DataMall
+(`UNABLE_TO_VERIFY_LEAF_SIGNATURE`), or `git add` into `.git/objects`. Prefer
+retrying failed adds file-by-file; never commit secrets to work around TLS.
+
+Node does **not** use the Windows certificate store. If DataMall works in
+PowerShell/browsers but fails in Node:
+
+```powershell
+powershell -File scripts/export-corp-ca.ps1
+# then in .env:
+# NODE_EXTRA_CA_CERTS=D:/GitHub/sg-transport/.local/corp-ca.pem
+```
+
+Do not set `NODE_TLS_REJECT_UNAUTHORIZED=0` permanently.
 
 ## Next reading
 
