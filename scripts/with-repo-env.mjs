@@ -17,11 +17,18 @@ if (argv.length === 0) {
   process.exit(1);
 }
 
+// `shell: true` on Linux often leaves `tsx watch` without a running child.
+// Only use a shell on Windows (where .cmd shims need it).
 const child = spawn(argv[0], argv.slice(1), {
   env,
   stdio: "inherit",
-  shell: true,
+  shell: process.platform === "win32",
   cwd: process.cwd(),
+});
+
+child.on("error", (err) => {
+  console.error(`[with-repo-env] failed to start ${argv[0]}:`, err.message);
+  process.exit(1);
 });
 
 child.on("exit", (code, signal) => {
