@@ -16,13 +16,18 @@ Copies also land under `packages/geometry-ts/data/`.
 
 ## Bus extract resolution order
 
-1. Local dumps under `data/lta/` **if** Stops and Routes overlap into ≥1 line  
-2. Live DataMall (when `LTA_ACCOUNT_KEY` is set)  
-3. Committed fixtures in `packages/geometry-ts/fixtures/bus/`  
-   (DEMO Victoria Victoria St + WEST corridor for Arrival GPS demos)
+Controlled by `BUS_GEOMETRY_SOURCE` (`auto` default):
+
+1. **live** — paginated DataMall when `LTA_ACCOUNT_KEY` is set (and on
+   `auto` when the key works). Successful live pulls are cached under
+   `data/lta/BusStops|BusRoutes` (gitignored).
+2. **local** — `data/lta/` dumps when Stops and Routes overlap into ≥1 line
+3. **fixture** — committed `fixtures/bus/` (Victoria St + WEST corridor demos)
+
+Force a path with `BUS_GEOMETRY_SOURCE=live|local|fixture`.
 
 Partial single-page API downloads often **don’t** overlap — the extractor
-warns and falls through to fixtures. See
+warns and falls through. See
 [`packages/geometry-ts/README.md`](../packages/geometry-ts/README.md).
 
 ## Local DataMall dumps
