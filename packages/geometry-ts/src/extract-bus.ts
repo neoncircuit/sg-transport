@@ -1,10 +1,13 @@
 /**
  * Bus geometry from LTA DataMall BusStops + BusRoutes.
  *
- * Resolution order:
- *   1. Local `data/lta/` dumps (when they produce overlapping features)
- *   2. Committed fixtures under `fixtures/bus/` (always overlap — demo path)
- *   3. Live paginated fetch when `LTA_ACCOUNT_KEY` is set
+ * Resolution order (`BUS_GEOMETRY_SOURCE`, default `auto`):
+ *   1. **live** — paginated DataMall when `LTA_ACCOUNT_KEY` is set
+ *   2. **local** — `data/lta/` dumps (when they produce overlapping features)
+ *   3. **fixture** — committed `fixtures/bus/` (always overlap — demo path)
+ *
+ * Successful live fetches are written back under `data/lta/` (gitignored)
+ * so offline runs keep the island-wide cache.
  */
 
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
@@ -32,6 +35,19 @@ const frontendGeom = path.resolve(
   "../../../apps/frontend-ts/public/geometry",
 );
 
+type SourcePreference = "auto" | "live" | "local" | "fixture";
+
+function sourcePreference(): SourcePreference {
+  const raw = (process.env.BUS_GEOMETRY_SOURCE ?? "auto").trim().toLowerCase();
+  if (raw === "live" || raw === "local" || raw === "fixture" || raw === "auto") {
+    return raw;
+  }
+  console.warn(
+    `[geometry] unknown BUS_GEOMETRY_SOURCE=${raw}; using auto`,
+  );
+  return "auto";
+}
+
 async function fetchAllPages<T>(
   endpoint: string,
   accountKey: string,
@@ -52,6 +68,7 @@ async function fetchAllPages<T>(
     const body = (await res.json()) as { value: T[] };
     if (!body.value?.length) break;
     rows.push(...body.value);
+    console.log(`[geometry] ${endpoint} … ${rows.length} rows`);
     if (body.value.length < 500) break;
     skip += 500;
   }
@@ -94,16 +111,41 @@ async function loadFixtures(): Promise<{
   );
 }
 
+/** Persist live pages so offline extract / pollers can reuse island data. */
+async function cacheLiveDumps(
+  stops: BusStop[],
+  routes: BusRouteRow[],
+): Promise<void> {
+  const root = defaultLtaDataDir();
+  const stopsDir = path.join(root, "BusStops");
+  const routesDir = path.join(root, "BusRoutes");
+  await mkdir(stopsDir, { recursive: true });
+  await mkdir(routesDir, { recursive: true });
+  await writeFile(
+    path.join(stopsDir, "BusStops.json"),
+    `${JSON.stringify({ value: stops }, null, 2)}\n`,
+    "utf8",
+  );
+  await writeFile(
+    path.join(routesDir, "BusRoutes.json"),
+    `${JSON.stringify({ value: routes }, null, 2)}\n`,
+    "utf8",
+  );
+  console.log(`[geometry] cached live dumps → ${root}/BusStops|BusRoutes`);
+}
+
 async function loadLive(accountKey: string): Promise<{
   stops: BusStop[];
   routes: BusRouteRow[];
   label: string;
 }> {
   console.log("[geometry] downloading LTA BusStops + BusRoutes…");
+  // Sequential pages per endpoint; fetch both endpoints in parallel.
   const [stops, routes] = await Promise.all([
     fetchAllPages<BusStop>("BusStops", accountKey),
     fetchAllPages<BusRouteRow>("BusRoutes", accountKey),
   ]);
+  await cacheLiveDumps(stops, routes);
   return { stops, routes, label: "live DataMall" };
 }
 
@@ -112,26 +154,64 @@ async function resolveInputs(): Promise<{
   routes: BusRouteRow[];
   label: string;
 }> {
+  const pref = sourcePreference();
   const accountKey = process.env.LTA_ACCOUNT_KEY?.trim();
-  const local = await loadLocal();
 
-  if (local) {
-    const lines = buildServiceLines(local.stops, local.routes);
-    if (lines.features.length > 0) return local;
-    console.warn(
-      "[geometry] local dumps have 0 overlapping stop/route features — trying fixtures",
-    );
-  }
-
-  if (accountKey) {
+  async function tryLive(): Promise<{
+    stops: BusStop[];
+    routes: BusRouteRow[];
+    label: string;
+  } | null> {
+    if (!accountKey) return null;
     try {
       return await loadLive(accountKey);
     } catch (err) {
       console.warn(
-        `[geometry] live fetch failed (${err instanceof Error ? err.message : err}); using fixtures`,
+        `[geometry] live fetch failed (${err instanceof Error ? err.message : err})`,
       );
+      return null;
     }
   }
+
+  async function tryLocal(): Promise<{
+    stops: BusStop[];
+    routes: BusRouteRow[];
+    label: string;
+  } | null> {
+    const local = await loadLocal();
+    if (!local) return null;
+    const lines = buildServiceLines(local.stops, local.routes);
+    if (lines.features.length === 0) {
+      console.warn(
+        "[geometry] local dumps have 0 overlapping stop/route features",
+      );
+      return null;
+    }
+    return local;
+  }
+
+  if (pref === "live") {
+    const live = await tryLive();
+    if (live) return live;
+    throw new Error("BUS_GEOMETRY_SOURCE=live requires a working LTA_ACCOUNT_KEY");
+  }
+
+  if (pref === "local") {
+    const local = await tryLocal();
+    if (local) return local;
+    throw new Error("BUS_GEOMETRY_SOURCE=local found no usable data/lta dumps");
+  }
+
+  if (pref === "fixture") {
+    return loadFixtures();
+  }
+
+  // auto: prefer live when keyed (island-wide), else local, else fixtures
+  const live = await tryLive();
+  if (live) return live;
+
+  const local = await tryLocal();
+  if (local) return local;
 
   try {
     return await loadFixtures();

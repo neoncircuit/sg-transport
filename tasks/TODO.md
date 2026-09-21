@@ -95,7 +95,8 @@ then `pnpm extract:bus`. Spot-check CCL / DTL / NSL on the map.
       fallback) + geometry extract from `data/lta/`
 - [x] Expand local dumps: committed overlapping Victoria St fixtures so
       `extract:bus` always yields polylines; falls back when `data/lta/` pages
-      don't overlap. Still want full island Stops↔Routes when keyed.
+      don't overlap. Live AccountKey pull caches island-wide Stops↔Routes
+      under `data/lta/` (gitignored).
 - [x] Snap Arrival GPS onto Routes polylines (Turf.js `nearestPointOnLine`);
       west corridor fixture aligns sample Arrival GPS for offline demos
 - [x] Poll schedule scaffold: 20s cadence + hot/normal tier round-robin
