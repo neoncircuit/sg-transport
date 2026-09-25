@@ -10,6 +10,8 @@ import { VehicleStore } from "./vehicle-store.js";
 export interface GatewayOptions {
   staleMs?: number;
   tickMs?: number;
+  /** Bind address — default 127.0.0.1; use 0.0.0.0 in Docker. */
+  host?: string;
   /** From git describe / APP_VERSION — shown on /health. */
   version?: string;
   gitSha?: string;
@@ -54,6 +56,7 @@ export function createGateway(options: GatewayOptions = {}): {
 } {
   const staleMs = options.staleMs ?? Number(process.env.INGEST_STALE_MS ?? 30_000);
   const tickMs = options.tickMs ?? Number(process.env.TICK_MS ?? 1000);
+  const host = options.host ?? process.env.GATEWAY_HOST?.trim() ?? "127.0.0.1";
   const version = options.version ?? process.env.APP_VERSION?.trim() ?? "0.0.0-dev";
   const gitSha = options.gitSha ?? process.env.GIT_SHA?.trim() ?? "unknown";
   const store = new VehicleStore(staleMs);
@@ -68,12 +71,38 @@ export function createGateway(options: GatewayOptions = {}): {
   }
 
   function broadcast(msg: VehicleSnapshotMessage): void {
+    if (clients.size === 0) return;
     const raw = JSON.stringify(msg);
     for (const client of clients) {
       if (client.readyState === client.OPEN) {
         client.send(raw);
       }
     }
+  }
+
+  function countsByMode(vehicles: VehiclePosition[]): Record<string, number> {
+    const counts: Record<string, number> = {};
+    for (const v of vehicles) {
+      counts[v.mode] = (counts[v.mode] ?? 0) + 1;
+    }
+    return counts;
+  }
+
+  function healthPayload(): Record<string, unknown> {
+    const now = Date.now();
+    const vehicles = store.peek(now);
+    return {
+      ok: true,
+      version,
+      gitSha,
+      clients: clients.size,
+      phase: "2-live",
+      sources: store.activeSources(now),
+      sourceAgesMs: store.sourceAges(now),
+      vehicleCount: vehicles.length,
+      byMode: countsByMode(vehicles),
+      revision: store.getRevision(),
+    };
   }
 
   async function handleIngest(
@@ -116,16 +145,7 @@ export function createGateway(options: GatewayOptions = {}): {
   const server = createServer((req, res) => {
     if (req.url === "/health") {
       res.writeHead(200, { "content-type": "application/json" });
-      res.end(
-        JSON.stringify({
-          ok: true,
-          version,
-          gitSha,
-          clients: clients.size,
-          phase: "2-live",
-          sources: store.activeSources(),
-        }),
-      );
+      res.end(JSON.stringify(healthPayload()));
       return;
     }
 
@@ -160,6 +180,7 @@ export function createGateway(options: GatewayOptions = {}): {
   });
 
   let tickTimer: ReturnType<typeof setInterval> | undefined;
+  let lastBroadcastRevision = -1;
 
   return {
     async listen(port = 0): Promise<Gateway> {
@@ -168,7 +189,7 @@ export function createGateway(options: GatewayOptions = {}): {
           reject(err);
         };
         server.once("error", onError);
-        server.listen(port, "127.0.0.1", () => {
+        server.listen(port, host, () => {
           server.off("error", onError);
           // Large ingest POSTs from pollers (hundreds of vehicles) should not
           // be killed by tight header/request timeouts on a quiet socket.
@@ -180,7 +201,15 @@ export function createGateway(options: GatewayOptions = {}): {
             return;
           }
           tickTimer = setInterval(() => {
-            broadcast(snapshot());
+            if (clients.size === 0) return;
+            // Poller overlays are stable between ingest; skip identical frames.
+            // Fake fleet bumps revision every tick so motion still animates.
+            const before = store.getRevision();
+            const msg = snapshot();
+            const after = store.getRevision();
+            if (after === lastBroadcastRevision && after === before) return;
+            lastBroadcastRevision = after;
+            broadcast(msg);
           }, tickMs);
 
           resolve({

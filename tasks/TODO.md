@@ -218,10 +218,10 @@ now have enough moving parts that silent failures are easy to miss.
 - [x] `packages/mcp-server-py`: expose the live state store as MCP tools
       (`vehicles_near`, `vehicles_on_route`, `vehicle_snapshot`) via
       `GET /vehicles` on `backend-ts`
-- [ ] Historical replay (if wanted) — this is the point a real database
-      earns its place, not before
-- [ ] Performance pass once all layers are live simultaneously: client-side
-      culling, gateway broadcast batching, etc.
+- [ ] Historical replay (deferred) — needs a real database; not blocking
+      a public map. Revisit after Phase 8 if demand appears.
+- [x] Performance pass: gateway skips unchanged poller frames; client
+      viewport-culls GeoJSON; `/health` reports per-source ages + mode counts
 
 ---
 
@@ -230,6 +230,13 @@ now have enough moving parts that silent failures are easy to miss.
 **Goal**: only after the map is something we’d stand behind — at minimum
 buses + scheduled/simulated MRT (Phase 3), ideally with planes/ships stable
 too — put it on a public URL.
+
+Prep (no public URL yet):
+
+- [x] `docker-compose.yml` for gateway + pollers rehearsal
+- [x] [`docs/deploy.md`](../docs/deploy.md) checklist + hosting notes
+
+Still required to go live:
 
 - [ ] Choose host (Cloudflare / Fly / Railway / etc.)
 - [ ] Deploy `frontend-ts` + `backend-ts` with real env/config

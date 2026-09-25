@@ -1,0 +1,63 @@
+# Local / staging stack for SG Live (Phase 8 prep).
+# Build images from the repo root:
+#   docker compose up --build
+#
+# Frontend is not containerised yet — run `pnpm --filter @sg-transport/frontend dev`
+# against GATEWAY_URL=http://127.0.0.1:8787, or point a reverse proxy at
+# backend:8787 and a static build of apps/frontend-ts/dist.
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.backend
+    ports:
+      - "8787:8787"
+    environment:
+      PORT: "8787"
+      GATEWAY_HOST: "0.0.0.0"
+      TICK_MS: "1000"
+      INGEST_STALE_MS: "30000"
+      APP_VERSION: ${APP_VERSION:-compose-dev}
+      GIT_SHA: ${GIT_SHA:-local}
+
+  bus-poller:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.bus-poller
+    environment:
+      GATEWAY_URL: http://backend:8787
+      LTA_ACCOUNT_KEY: ${LTA_ACCOUNT_KEY:-}
+      BUS_SOURCE: ${BUS_SOURCE:-auto}
+    depends_on:
+      - backend
+
+  mrt-poller:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.mrt-poller
+    environment:
+      GATEWAY_URL: http://backend:8787
+    depends_on:
+      - backend
+
+  adsb-poller:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.adsb-poller
+    environment:
+      GATEWAY_URL: http://backend:8787
+      ADSB_SOURCE: ${ADSB_SOURCE:-auto}
+    depends_on:
+      - backend
+
+  ais-poller:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.ais-poller
+    environment:
+      GATEWAY_URL: http://backend:8787
+      AIS_API_KEY: ${AIS_API_KEY:-}
+      AIS_SOURCE: ${AIS_SOURCE:-auto}
+    depends_on:
+      - backend

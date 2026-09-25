@@ -31,6 +31,7 @@ import {
 } from "./themes";
 import { VehicleSocket } from "./vehicle-socket";
 import { ensureVehicleLayer, HIT_LAYER_ID, updateVehicles } from "./vehicles-layer";
+import { cullToViewport } from "./viewport-cull";
 
 const statusEl = document.querySelector<HTMLParagraphElement>("#status");
 const liveDotEl = document.querySelector<HTMLSpanElement>("#live-dot");
@@ -93,11 +94,9 @@ function updateLegend(vehicles: VehiclePosition[]): void {
 }
 
 function paintVehicles(map: maplibregl.Map, vehicles: VehiclePosition[]): void {
-  updateVehicles(
-    map,
-    filterByModeVisibility(vehicles, modeVisibility) as VehiclePosition[],
-    activeTheme,
-  );
+  const visible = filterByModeVisibility(vehicles, modeVisibility) as VehiclePosition[];
+  const culled = cullToViewport(visible, map.getBounds());
+  updateVehicles(map, culled, activeTheme);
 }
 
 function syncModeToggleUi(): void {
@@ -302,6 +301,10 @@ locateBtn?.addEventListener("click", () => centerOnMe(map));
 map.on("load", () => {
   mountOverlayLayers(map);
   void loadRailLegend();
+
+  map.on("moveend", () => {
+    if (!remountingStyle) paintVehicles(map, latestVehicles);
+  });
 
   map.on("click", HIT_LAYER_ID, (e) => {
     const feature = e.features?.[0];

@@ -46,7 +46,7 @@ uses **`git describe --tags --always --dirty`** (for example
 | Surface | What you see |
 |---|---|
 | Map badge | Compact form (`v0.1.0` or `v0.1.0+8`); hover for full describe + SHA |
-| `GET /health` | `version` + `gitSha` fields |
+| `GET /health` | `version` + `gitSha` + `sources` + `sourceAgesMs` + `byMode` |
 | CLI | `pnpm version:print` (or `--json`) |
 
 Override with `APP_VERSION` / `GIT_SHA` in CI or Docker images that have no

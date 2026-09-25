@@ -73,6 +73,15 @@ export class FakeVehicleStore {
       v.bearing = (v.bearing + (Math.random() - 0.5) * 8 + 360) % 360;
     }
 
+    return this.toPositions(now);
+  }
+
+  /** Current positions without advancing the simulation. */
+  peek(now = Date.now()): VehiclePosition[] {
+    return this.toPositions(now);
+  }
+
+  private toPositions(now: number): VehiclePosition[] {
     return this.vehicles.map((v) => ({
       id: v.id,
       mode: v.mode,

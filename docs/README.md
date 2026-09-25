@@ -9,6 +9,7 @@ Start here for how SG Live is built and how to work on it.
 | [Data & geometry](./data-and-geometry.md) | Engineers | Rail/bus extracts, fixtures, `data/lta/` |
 | [LTA DataMall](./datamall.md) | Engineers | Official APIs, licence, dump layout |
 | [Contributing](./contributing.md) | Contributors | Branches, commits, PR checklist |
+| [Deploy](./deploy.md) | Operators | Phase 8 public URL checklist + compose |
 | [Glossary](./glossary.md) | Everyone | Shared terms (`VehiclePosition`, ingest, …) |
 
 ## Product & planning (repo root / tasks)

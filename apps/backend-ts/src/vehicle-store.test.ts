@@ -110,4 +110,18 @@ describe("VehicleStore", () => {
       false,
     );
   });
+
+  it("bumps revision on ingest but peek does not advance fakes", () => {
+    const store = new VehicleStore(10_000);
+    const r0 = store.getRevision();
+    store.ingest("bus-poller", [bus("a")], 1_000);
+    assert.equal(store.getRevision(), r0 + 1);
+    const peekA = store.peek(1_000);
+    const peekB = store.peek(1_000);
+    assert.deepEqual(
+      peekA.map((v) => v.id),
+      peekB.map((v) => v.id),
+    );
+    assert.equal(store.getRevision(), r0 + 1);
+  });
 });
