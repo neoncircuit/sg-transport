@@ -215,8 +215,9 @@ now have enough moving parts that silent failures are easy to miss.
 
 ## Phase 7 — Polish / optional MCP query layer
 
-- [ ] `packages/mcp-server-py`: expose the live state store as MCP tools
-      (`vehicles_near`, `vehicles_on_route`) per the earlier MCP discussion
+- [x] `packages/mcp-server-py`: expose the live state store as MCP tools
+      (`vehicles_near`, `vehicles_on_route`, `vehicle_snapshot`) via
+      `GET /vehicles` on `backend-ts`
 - [ ] Historical replay (if wanted) — this is the point a real database
       earns its place, not before
 - [ ] Performance pass once all layers are live simultaneously: client-side

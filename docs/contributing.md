@@ -20,14 +20,21 @@ pnpm test
 pnpm build
 ```
 
-Python pollers (`adsb-poller-py`, `ais-poller-py`):
+Python pollers (`adsb-poller-py`, `ais-poller-py`) and optional MCP package:
 
 ```bash
 python3 -m pip install -e "services/adsb-poller-py[dev]"
 python3 -m ruff check services/adsb-poller-py
 python3 -m ruff format --check services/adsb-poller-py
 python3 -m pytest services/adsb-poller-py/tests -q
-# same for services/ais-poller-py
+# same for services/ais-poller-py and packages/mcp-server-py
+```
+
+Optional MCP (gateway must be running):
+
+```bash
+python3 -m pip install -e "packages/mcp-server-py[dev]"
+GATEWAY_URL=http://127.0.0.1:8787 python3 -m sg_transport_mcp
 ```
 
 CI (`.github/workflows/ci.yml`) runs Biome → typecheck → test → Ruff →

@@ -19,6 +19,7 @@ pnpm dev
 |---|---|
 | http://localhost:5173 | Map (Vite; next free port if busy) |
 | http://localhost:8787/health | Gateway health (next free port if busy) |
+| http://localhost:8787/vehicles | JSON vehicle snapshot (MCP / tools) |
 | `ws://…/ws` | Vehicle snapshots (via Vite proxy → bound gateway port) |
 | `POST …/ingest` | Poller → gateway (internal) |
 

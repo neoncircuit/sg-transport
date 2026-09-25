@@ -16,8 +16,8 @@ and “why buses before MRT” live in [`DESIGN.md`](../DESIGN.md).
 │  (simulated on  │                       │                  │
 │   rail.geojson) │                       │  WS /ws          │──▶ MapLibre client
 └─────────────────┘                       │  GET /health     │     (frontend-ts)
-┌─────────────────┐     POST /ingest      │                  │
-│  adsb-poller-py │ ───────────────────▶  │                  │
+┌─────────────────┐     POST /ingest      │  GET /vehicles   │──▶ mcp-server-py
+│  adsb-poller-py │ ───────────────────▶  │                  │     (optional MCP)
 │  (adsb.lol)     │                       │                  │
 └─────────────────┘                       │                  │
 ┌─────────────────┐     POST /ingest      │                  │
@@ -39,9 +39,10 @@ and “why buses before MRT” live in [`DESIGN.md`](../DESIGN.md).
 | Path | Role |
 |---|---|
 | `apps/frontend-ts` | MapLibre GL map, themes, mobile-first chrome |
-| `apps/backend-ts` | HTTP health + ingest, in-memory store, WebSocket fan-out |
+| `apps/backend-ts` | HTTP health + ingest + snapshot, in-memory store, WebSocket fan-out |
 | `packages/shared-types-ts` | Shared TypeScript contracts |
 | `packages/geometry-ts` | Offline extracts → GeoJSON (rail OSM, bus LTA/fixtures) |
+| `packages/mcp-server-py` | Optional MCP tools over `GET /vehicles` |
 | `services/bus-poller-ts` | Bus positions → ingest (cascade + route snap) |
 | `services/mrt-poller-ts` | Simulated MRT/LRT along rail geometry → ingest |
 | `services/adsb-poller-py` | ADS-B aircraft (adsb.lol) → ingest as `plane` |

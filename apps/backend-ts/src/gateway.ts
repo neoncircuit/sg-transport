@@ -46,7 +46,7 @@ function isVehiclePosition(value: unknown): value is VehiclePosition {
 }
 
 /**
- * HTTP + WebSocket gateway: /health, POST /ingest, /ws snapshots.
+ * HTTP + WebSocket gateway: /health, GET /vehicles, POST /ingest, /ws snapshots.
  * Extracted so tests can bind an ephemeral port without side-effect imports.
  */
 export function createGateway(options: GatewayOptions = {}): {
@@ -126,6 +126,14 @@ export function createGateway(options: GatewayOptions = {}): {
           sources: store.activeSources(),
         }),
       );
+      return;
+    }
+
+    if (req.url === "/vehicles" && (req.method === "GET" || req.method === "HEAD")) {
+      const body = JSON.stringify(snapshot());
+      res.writeHead(200, { "content-type": "application/json" });
+      if (req.method === "GET") res.end(body);
+      else res.end();
       return;
     }
 

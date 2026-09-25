@@ -90,6 +90,15 @@ describe("ingest → websocket", () => {
       assert.ok(ids.includes("integ-1"));
       assert.ok(ids.includes("integ-2"));
       assert.equal(ids.includes("bus-demo-1"), false);
+
+      const httpSnap = (await (await fetch(`${base}/vehicles`)).json()) as unknown;
+      assert.equal(isVehicleSnapshotMessage(httpSnap), true);
+      if (!isVehicleSnapshotMessage(httpSnap)) return;
+      const httpIds = httpSnap.vehicles
+        .filter((v) => v.mode === "bus")
+        .map((v) => v.id);
+      assert.ok(httpIds.includes("integ-1"));
+      assert.ok(httpIds.includes("integ-2"));
     } finally {
       await gateway.close();
     }

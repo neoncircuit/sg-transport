@@ -31,3 +31,4 @@ These stay outside `docs/` on purpose — product vision vs engineering how-to:
 
 Keep package-local READMEs (`packages/*/README.md`, `data/lta/README.md`) for
 narrow how-tos; link up to this hub instead of duplicating architecture.
+Optional agent tooling: [`packages/mcp-server-py/README.md`](../packages/mcp-server-py/README.md).

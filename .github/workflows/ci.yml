@@ -66,6 +66,15 @@ jobs:
       - name: Test ais-poller (Python)
         run: python3 -m pytest services/ais-poller-py/tests -q
 
+      - name: Lint mcp-server (Ruff)
+        run: |
+          python3 -m pip install -e "packages/mcp-server-py[dev]"
+          python3 -m ruff check packages/mcp-server-py
+          python3 -m ruff format --check packages/mcp-server-py
+
+      - name: Test mcp-server (Python)
+        run: python3 -m pytest packages/mcp-server-py/tests -q
+
       - name: Build
         run: pnpm build
         env:
