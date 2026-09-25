@@ -1,0 +1,11 @@
+# Railway service: ais-poller-py
+# GATEWAY_URL=http://backend.railway.internal:${{backend.PORT}}
+# Secret: AIS_API_KEY
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "infra/docker/Dockerfile.ais-poller"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

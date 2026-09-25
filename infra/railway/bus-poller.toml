@@ -1,0 +1,11 @@
+# Railway service: bus-poller-ts
+# GATEWAY_URL=http://backend.railway.internal:${{backend.PORT}}
+# Keep sleep disabled. No public networking.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "infra/docker/Dockerfile.bus-poller"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

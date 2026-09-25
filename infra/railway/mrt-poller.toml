@@ -1,0 +1,10 @@
+# Railway service: mrt-poller-ts
+# GATEWAY_URL=http://backend.railway.internal:${{backend.PORT}}
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "infra/docker/Dockerfile.mrt-poller"
+
+[deploy]
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

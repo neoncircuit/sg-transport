@@ -10,7 +10,17 @@ const gateway = await listenGateway({
   version,
   gitSha,
 });
-const portFile = await writeGatewayPort(gateway.port);
+
+let portFile = "(skipped)";
+try {
+  portFile = await writeGatewayPort(gateway.port);
+} catch (err) {
+  console.warn(
+    `[backend-ts] could not write gateway port file: ${
+      err instanceof Error ? err.message : String(err)
+    }`,
+  );
+}
 
 console.log(`[backend-ts] version ${version} (${gitSha})`);
 console.log(`[backend-ts] health http://localhost:${gateway.port}/health`);

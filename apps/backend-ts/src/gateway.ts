@@ -56,7 +56,10 @@ export function createGateway(options: GatewayOptions = {}): {
 } {
   const staleMs = options.staleMs ?? Number(process.env.INGEST_STALE_MS ?? 30_000);
   const tickMs = options.tickMs ?? Number(process.env.TICK_MS ?? 1000);
-  const host = options.host ?? process.env.GATEWAY_HOST?.trim() ?? "127.0.0.1";
+  const host =
+    options.host ??
+    process.env.GATEWAY_HOST?.trim() ??
+    (process.env.RAILWAY_ENVIRONMENT ? "0.0.0.0" : "127.0.0.1");
   const version = options.version ?? process.env.APP_VERSION?.trim() ?? "0.0.0-dev";
   const gitSha = options.gitSha ?? process.env.GIT_SHA?.trim() ?? "unknown";
   const store = new VehicleStore(staleMs);
@@ -245,6 +248,14 @@ export async function listenGateway(
 
   if (preferred === 0) {
     return createGateway(options).listen(0);
+  }
+
+  // Railway (and similar) assign an exact PORT — do not hunt for the next free one.
+  const strict =
+    process.env.GATEWAY_STRICT_PORT === "1" || Boolean(process.env.RAILWAY_ENVIRONMENT);
+
+  if (strict) {
+    return createGateway(options).listen(preferred);
   }
 
   let lastErr: unknown;

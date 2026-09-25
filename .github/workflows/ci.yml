@@ -175,3 +175,19 @@ jobs:
             ${{ steps.meta.outputs.prefix }}-ais-poller:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - name: Build frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.frontend
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          build-args: |
+            APP_VERSION=${{ env.APP_VERSION }}
+            GIT_SHA=${{ env.GIT_SHA }}
+            VITE_WS_URL=
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-frontend:latest
+            ${{ steps.meta.outputs.prefix }}-frontend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

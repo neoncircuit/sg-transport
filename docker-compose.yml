@@ -2,9 +2,8 @@
 # Build images from the repo root:
 #   docker compose up --build
 #
-# Frontend is not containerised yet — run `pnpm --filter @sg-transport/frontend dev`
-# against GATEWAY_URL=http://127.0.0.1:8787, or point a reverse proxy at
-# backend:8787 and a static build of apps/frontend-ts/dist.
+# Frontend serves the Vite build; set VITE_WS_URL at build time for a remote
+# gateway, or leave empty to use same-origin /ws (needs a proxy in front).
 
 services:
   backend:
@@ -20,6 +19,19 @@ services:
       INGEST_STALE_MS: "30000"
       APP_VERSION: ${APP_VERSION:-compose-dev}
       GIT_SHA: ${GIT_SHA:-local}
+
+  frontend:
+    build:
+      context: .
+      dockerfile: infra/docker/Dockerfile.frontend
+      args:
+        VITE_WS_URL: ${VITE_WS_URL:-ws://127.0.0.1:8787/ws}
+        APP_VERSION: ${APP_VERSION:-compose-dev}
+        GIT_SHA: ${GIT_SHA:-local}
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
 
   bus-poller:
     build:

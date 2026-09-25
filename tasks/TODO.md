@@ -233,13 +233,15 @@ too — put it on a public URL.
 
 Prep (no public URL yet):
 
-- [x] `docker-compose.yml` for gateway + pollers rehearsal
-- [x] [`docs/deploy.md`](../docs/deploy.md) checklist + hosting notes
+- [x] `docker-compose.yml` for gateway + pollers + frontend rehearsal
+- [x] [`docs/deploy.md`](../docs/deploy.md) checklist + Railway first-try steps
+- [x] `infra/railway/*.toml` + `Dockerfile.frontend`
 
 Still required to go live:
 
-- [ ] Choose host (Cloudflare / Fly / Railway / etc.)
-- [ ] Deploy `frontend-ts` + `backend-ts` with real env/config
+- [x] Choose host — **Railway** (default); Fly.io if you want region `sin`
+      (see [`docs/deploy.md`](../docs/deploy.md))
+- [ ] Deploy `frontend-ts` + `backend-ts` (+ pollers) with real env/config
 - [ ] Confirm DataMall (and any other) licence terms for public redistribution
 - [ ] Smoke-test the live URL; keep a rollback path
 
