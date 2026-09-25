@@ -2,19 +2,22 @@
 
 No extra git branches — the demo is built from `main` by Actions.
 
-## 1. Enable Pages (fixes the 404)
+## Why the workflow failed on `6c2621c`
 
-The first deploy failed because Pages was not enabled yet. Build succeeded;
-only deploy failed.
+The **frontend build succeeded**. Deploy failed at **Setup Pages** because
+GitHub Pages was not enabled on the repository yet
+(`GET /repos/.../pages` → 404).
 
-1. Open https://github.com/neoncircuit/sg-transport/settings/pages
-2. **Build and deployment → Source** → **GitHub Actions**
-3. **Actions → GitHub Pages demo → Run workflow** (or push any frontend change)
+## Fix (one minute)
+
+1. Open https://github.com/neoncircuit/sg-transport/settings/pages  
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**  
+3. **Actions → GitHub Pages demo → Run workflow**  
 4. When green, open https://neoncircuit.github.io/sg-transport/
 
-Allow a minute after the first successful deploy for the site to appear.
+Allow up to a couple of minutes after the first successful deploy.
 
-## 2. Repo About sidebar
+## Repo About sidebar (optional)
 
 ```bash
 gh auth login

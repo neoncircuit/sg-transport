@@ -59,6 +59,25 @@ jobs:
       - name: Add 404.html for GitHub Pages SPA fallback
         run: cp apps/frontend-ts/dist/index.html apps/frontend-ts/dist/404.html
 
+      # Fails with a clear message if Pages is not enabled yet (common first-run).
+      - name: Require Pages (GitHub Actions source)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            try {
+              await github.rest.repos.getPages({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+              });
+            } catch (err) {
+              core.setFailed(
+                "GitHub Pages is not enabled for this repo yet.\\n" +
+                  "Fix once: Settings → Pages → Source = GitHub Actions\\n" +
+                  `https://github.com/${context.repo.owner}/${context.repo.repo}/settings/pages\\n` +
+                  "Then re-run this workflow (Actions → GitHub Pages demo → Run workflow)."
+              );
+            }
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
