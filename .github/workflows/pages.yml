@@ -1,5 +1,9 @@
 name: GitHub Pages demo
 
+# Deploys from `main` only (no extra branches).
+# One-time: Settings → Pages → Source = GitHub Actions, then re-run this workflow.
+# https://github.com/neoncircuit/sg-transport/settings/pages
+
 on:
   push:
     branches: [main]
@@ -51,6 +55,12 @@ jobs:
           VITE_BASE: /sg-transport/
           APP_VERSION: ${{ github.ref_name }}
           GIT_SHA: ${{ github.sha }}
+
+      - name: Add 404.html for GitHub Pages SPA fallback
+        run: cp apps/frontend-ts/dist/index.html apps/frontend-ts/dist/404.html
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

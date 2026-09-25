@@ -8,6 +8,10 @@ A 2D live map of Singapore transport: **buses**, **MRT/LRT**, **planes**, and
 **[Open the public demo →](https://neoncircuit.github.io/sg-transport/)**
 *(simulated fleet on GitHub Pages — not live DataMall/AIS)*
 
+> If that link 404s: **Settings → Pages → Source = GitHub Actions**, then
+> re-run the **GitHub Pages demo** workflow. Still on `main` only — no
+> extra branches. Details: [`scripts/github-about.md`](./scripts/github-about.md).
+
 > **Status:** Core layers run locally (Phases 0–6 + MCP/polish). Public
 > **live** deploy (Railway) is Phase 8 — confirm DataMall / AIS terms before
 > swapping the demo for a keyed gateway.
