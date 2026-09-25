@@ -85,10 +85,14 @@ def push_ingest(
     source: str = "adsb-poller",
 ) -> None:
     body = json.dumps({"source": source, "vehicles": vehicles}).encode("utf-8")
+    headers = {"content-type": "application/json", "connection": "close"}
+    ingest_token = os.environ.get("INGEST_TOKEN", "").strip()
+    if ingest_token:
+        headers["authorization"] = f"Bearer {ingest_token}"
     req = urllib.request.Request(
         f"{gateway_url.rstrip('/')}/ingest",
         data=body,
-        headers={"content-type": "application/json", "connection": "close"},
+        headers=headers,
         method="POST",
     )
     with urllib.request.urlopen(req, timeout=30) as res:

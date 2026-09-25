@@ -13,15 +13,20 @@ SG Live is inspired by two existing London transport maps:
 Basemap tiles via [OpenFreeMap](https://openfreemap.org) / Protomaps, built
 from [OpenStreetMap](https://www.openstreetmap.org/copyright) data (ODbL).
 
-Aircraft positions via [adsb.lol](https://adsb.lol) (community ADS-B aggregate;
-local map use). Ship positions via [aisstream.io](https://aisstream.io)
-(free API key; confirm redistribution terms before public deploy).
+Aircraft positions © [adsb.lol](https://adsb.lol), available under the
+[Open Data Commons Open Database License 1.0](https://opendatacommons.org/licenses/odbl/1-0/).
+SG Live normalizes and filters the source records for display.
 
-Live transport data (from Phase 2 onward) will come from
-[LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) and
-other sources; each will be attributed in the site footer and here when wired
-up. Follow [`docs/datamall.md`](./docs/datamall.md) for official guides,
-licence, and API terms.
+Ship positions can be sourced from [aisstream.io](https://aisstream.io) for
+local development. They are disabled in the public deployment until written
+redistribution permission is obtained.
+
+Bus arrival data is provided by
+[LTA DataMall](https://datamall.lta.gov.sg/content/datamall/en.html) under the
+[Singapore Open Data Licence](https://datamall.lta.gov.sg/content/datamall/en/SingaporeOpenDataLicence.html).
+SG Live derives approximate display positions from arrival records and is not
+endorsed by the Singapore Government. Follow
+[`docs/datamall.md`](./docs/datamall.md) for official guides and API terms.
 
 Community GTFS used as an **MRT schedule fallback** for the simulator
 (synthetic frequencies / first–last — not an official live feed):

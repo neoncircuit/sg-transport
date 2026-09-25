@@ -51,7 +51,9 @@ jobs:
       - name: Build demo frontend
         run: pnpm --filter @sg-transport/frontend... build
         env:
-          VITE_DEMO_MODE: "1"
+          # Set the repository variable VITE_WS_URL to switch Pages to live mode.
+          VITE_DEMO_MODE: ${{ vars.VITE_WS_URL == '' && '1' || '0' }}
+          VITE_WS_URL: ${{ vars.VITE_WS_URL }}
           VITE_BASE: /sg-transport/
           APP_VERSION: ${{ github.ref_name }}
           GIT_SHA: ${{ github.sha }}

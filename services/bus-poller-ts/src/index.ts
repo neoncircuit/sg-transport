@@ -27,6 +27,12 @@ async function pushToGateway(
   vehicles: Awaited<ReturnType<typeof collectVehicles>>["vehicles"],
 ): Promise<void> {
   const body = JSON.stringify({ source: SOURCE_ID, vehicles });
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+    connection: "close",
+  };
+  const ingestToken = process.env.INGEST_TOKEN?.trim();
+  if (ingestToken) headers.authorization = `Bearer ${ingestToken}`;
   const attempts = 3;
   let lastErr: unknown;
 
@@ -34,10 +40,7 @@ async function pushToGateway(
     try {
       const res = await fetch(`${gatewayUrl}/ingest`, {
         method: "POST",
-        headers: {
-          "content-type": "application/json",
-          connection: "close",
-        },
+        headers,
         body,
         // Avoid keep-alive sockets that WSL/Windows sometimes reset mid-body.
         keepalive: false,

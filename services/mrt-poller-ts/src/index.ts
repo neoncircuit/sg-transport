@@ -33,9 +33,14 @@ async function pushToGateway(
   gatewayUrl: string,
   vehicles: VehiclePosition[],
 ): Promise<void> {
+  const headers: Record<string, string> = {
+    "content-type": "application/json",
+  };
+  const ingestToken = process.env.INGEST_TOKEN?.trim();
+  if (ingestToken) headers.authorization = `Bearer ${ingestToken}`;
   const res = await fetch(`${gatewayUrl}/ingest`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers,
     body: JSON.stringify({ source: SOURCE_ID, vehicles }),
   });
   if (!res.ok && res.status !== 204) {

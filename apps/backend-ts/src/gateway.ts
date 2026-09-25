@@ -12,6 +12,8 @@ export interface GatewayOptions {
   tickMs?: number;
   /** Bind address — default 127.0.0.1; use 0.0.0.0 in Docker. */
   host?: string;
+  /** Shared bearer token required by POST /ingest. Optional for local dev. */
+  ingestToken?: string;
   /** From git describe / APP_VERSION — shown on /health. */
   version?: string;
   gitSha?: string;
@@ -62,6 +64,10 @@ export function createGateway(options: GatewayOptions = {}): {
     (process.env.RAILWAY_ENVIRONMENT ? "0.0.0.0" : "127.0.0.1");
   const version = options.version ?? process.env.APP_VERSION?.trim() ?? "0.0.0-dev";
   const gitSha = options.gitSha ?? process.env.GIT_SHA?.trim() ?? "unknown";
+  const ingestToken = options.ingestToken ?? process.env.INGEST_TOKEN?.trim();
+  if (process.env.RAILWAY_ENVIRONMENT && !ingestToken) {
+    throw new Error("INGEST_TOKEN is required on Railway");
+  }
   const store = new VehicleStore(staleMs);
   const clients = new Set<WebSocket>();
 
@@ -112,6 +118,15 @@ export function createGateway(options: GatewayOptions = {}): {
     req: import("node:http").IncomingMessage,
     res: import("node:http").ServerResponse,
   ): Promise<void> {
+    if (ingestToken) {
+      const authorization = req.headers.authorization;
+      if (authorization !== `Bearer ${ingestToken}`) {
+        res.writeHead(401, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "unauthorized" }));
+        return;
+      }
+    }
+
     const raw = await readBody(req);
     let body: unknown;
     try {

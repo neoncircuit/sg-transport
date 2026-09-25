@@ -12,7 +12,7 @@ MRT at minimum; planes/ships preferred. See [`tasks/TODO.md`](../tasks/TODO.md).
 
 1. Push this repo to GitHub (Railway deploys from git).
 2. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**.
-3. Create **six services** from the same repo (Root Directory = `/` for each):
+3. Create **five services** from the same repo (Root Directory = `/` for each):
 
 | Service | Config as Code path | Notes |
 |---|---|---|
@@ -21,26 +21,44 @@ MRT at minimum; planes/ships preferred. See [`tasks/TODO.md`](../tasks/TODO.md).
 | `bus-poller` | `/infra/railway/bus-poller.toml` | Private only |
 | `mrt-poller` | `/infra/railway/mrt-poller.toml` | Private only |
 | `adsb-poller` | `/infra/railway/adsb-poller.toml` | Private only |
-| `ais-poller` | `/infra/railway/ais-poller.toml` | Private only |
 
 4. **Disable app sleeping / serverless** on every service (pollers + WS must
    stay up).
 5. **backend** variables:
    - (Railway injects `PORT` and `RAILWAY_ENVIRONMENT` — host binds `0.0.0.0`)
-6. **Pollers** variables (each):
+   - `INGEST_TOKEN=<strong-random-secret>` (**required** on Railway)
+6. **Pollers** variables:
    - `GATEWAY_URL=http://backend.railway.internal:${{backend.PORT}}`
-   - `LTA_ACCOUNT_KEY` / `AIS_API_KEY` as needed (shared variables OK)
-   - Optional: `BUS_SOURCE=fixture`, `ADSB_SOURCE=fixture`, `AIS_SOURCE=fixture`
-     for a first smoke without live keys
+   - `INGEST_TOKEN=<same-secret-as-backend>` on bus, MRT, and ADS-B
+   - Bus: `LTA_ACCOUNT_KEY=<DataMall-key>` and `BUS_SOURCE=auto`
+   - ADS-B: `ADSB_SOURCE=live`
+   - Optional first smoke: `BUS_SOURCE=fixture` and `ADSB_SOURCE=fixture`
 7. Deploy **backend** first; open its public URL → `/health` should be OK.
 8. **frontend** build arg / variable used as Docker `ARG`:
    - `VITE_WS_URL=wss://<backend-public-host>/ws`
    - Redeploy frontend after backend domain is known
 9. Open the frontend domain; legend should move. Check `/health` `sources`.
 
+Do not deploy `ais-poller` publicly yet. AISStream works technically, but its
+public redistribution terms are not explicit; obtain written permission before
+publishing its vessel data.
+
 Private networking uses Railway’s `*.railway.internal` DNS — keep **ingest**
-off the public internet when possible (pollers stay private). The backend
-public URL is still needed for browser WebSockets.
+traffic on it when possible (pollers stay private). `/ingest` is still exposed
+by the public backend domain, so the shared bearer token is mandatory. The
+backend public URL is needed for browser WebSockets.
+
+### Use GitHub Pages for the frontend
+
+The existing Pages workflow remains in demo mode until a live gateway is
+configured:
+
+1. Repository **Settings → Secrets and variables → Actions → Variables**.
+2. Add `VITE_WS_URL` with `wss://<backend-public-host>/ws`.
+3. Run **Actions → GitHub Pages demo → Run workflow**.
+
+When `VITE_WS_URL` is present, the workflow builds live mode automatically.
+Removing the variable returns subsequent builds to the self-contained demo.
 
 | Need | Railway fit |
 |---|---|
@@ -64,10 +82,10 @@ Dockerfiles under `infra/docker/`.
 
 ## Checklist before a public URL
 
-1. **Licence** — Confirm LTA DataMall terms for redistribution; AIS free tier
-   is local/dev only until commercial terms are reviewed (`CREDITS.md`).
-2. **Secrets** — `LTA_ACCOUNT_KEY`, `AIS_API_KEY` via host secrets, never in
-   the image or frontend.
+1. **Licence** — Keep LTA and adsb.lol attribution visible; leave AIS disabled
+   until written redistribution permission is obtained (`CREDITS.md`).
+2. **Secrets** — `INGEST_TOKEN` and `LTA_ACCOUNT_KEY` via host variables,
+   never in the image, logs, or frontend.
 3. **Gateway** — `GATEWAY_HOST=0.0.0.0` (Docker/Railway default); pollers use
    private `GATEWAY_URL`.
 4. **Frontend** — `VITE_WS_URL` at image build time → public `wss://…/ws`.

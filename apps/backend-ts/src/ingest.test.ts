@@ -48,13 +48,30 @@ describe("listenGateway port fallback", () => {
 
 describe("ingest → websocket", () => {
   it("fans out poller vehicles to a WS client within a few seconds", async () => {
-    const gateway = await createGateway({ tickMs: 200, staleMs: 10_000 }).listen(0);
+    const gateway = await createGateway({
+      tickMs: 200,
+      staleMs: 10_000,
+      ingestToken: "test-ingest-token",
+    }).listen(0);
     const base = `http://127.0.0.1:${gateway.port}`;
 
     try {
-      const ingestRes = await fetch(`${base}/ingest`, {
+      const unauthorizedRes = await fetch(`${base}/ingest`, {
         method: "POST",
         headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          source: "bus-poller",
+          vehicles: [bus("rejected")],
+        }),
+      });
+      assert.equal(unauthorizedRes.status, 401);
+
+      const ingestRes = await fetch(`${base}/ingest`, {
+        method: "POST",
+        headers: {
+          authorization: "Bearer test-ingest-token",
+          "content-type": "application/json",
+        },
         body: JSON.stringify({
           source: "bus-poller",
           vehicles: [bus("integ-1"), bus("integ-2")],
