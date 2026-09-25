@@ -1,5 +1,8 @@
 # Railway service: backend-ts gateway
 # Dashboard: Root Directory = /  ·  Config path = /infra/railway/backend.toml
+#
+# Required variable: INGEST_TOKEN (same value on all pollers).
+# After deploy: Settings → Networking → Generate domain → use wss://…/ws for Pages.
 
 [build]
 builder = "DOCKERFILE"

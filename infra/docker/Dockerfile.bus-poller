@@ -19,6 +19,10 @@ RUN pnpm --filter @sg-transport/bus-poller... build \
 FROM node:22-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+ENV BUS_GEOJSON=/app/data/bus.geojson
+ENV BUS_STOPS_GEOJSON=/app/data/bus-stops.geojson
 COPY --from=build /out ./
+COPY packages/geometry-ts/data/bus.geojson /app/data/bus.geojson
+COPY packages/geometry-ts/data/bus-stops.geojson /app/data/bus-stops.geojson
 USER node
 CMD ["node", "dist/index.js"]

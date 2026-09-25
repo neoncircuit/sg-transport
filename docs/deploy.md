@@ -6,18 +6,20 @@ MRT at minimum; planes/ships preferred. See [`tasks/TODO.md`](../tasks/TODO.md).
 ## Recommended host: Railway
 
 **Default for SG Live’s first public URL.** Config stubs live under
-[`infra/railway/`](../infra/railway/).
+[`infra/railway/`](../infra/railway/). Step-by-step for **Pages UI + Railway
+backend** only: [`infra/railway/README.md`](../infra/railway/README.md).
 
 ### First try (manual)
 
 1. Push this repo to GitHub (Railway deploys from git).
 2. [railway.app](https://railway.app) → **New Project** → **Deploy from GitHub**.
-3. Create **five services** from the same repo (Root Directory = `/` for each):
+3. Create **four services** if the UI is GitHub Pages (recommended), or **five**
+   if you also host the Vite frontend on Railway:
 
 | Service | Config as Code path | Notes |
 |---|---|---|
 | `backend` | `/infra/railway/backend.toml` | Generate domain; public |
-| `frontend` | `/infra/railway/frontend.toml` | Generate domain; public |
+| `frontend` | `/infra/railway/frontend.toml` | Optional — skip when using Pages |
 | `bus-poller` | `/infra/railway/bus-poller.toml` | Private only |
 | `mrt-poller` | `/infra/railway/mrt-poller.toml` | Private only |
 | `adsb-poller` | `/infra/railway/adsb-poller.toml` | Private only |
