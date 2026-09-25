@@ -39,7 +39,7 @@ jobs:
           echo "APP_VERSION=$(node scripts/app-version.mjs)" >> "$GITHUB_ENV"
           echo "GIT_SHA=$(git rev-parse --short HEAD)" >> "$GITHUB_ENV"
 
-      - name: Lint
+      - name: Lint (Biome)
         run: pnpm lint
 
       - name: Typecheck
@@ -47,6 +47,24 @@ jobs:
 
       - name: Test
         run: pnpm test
+
+      - name: Lint adsb-poller (Ruff)
+        run: |
+          python3 -m pip install -e "services/adsb-poller-py[dev]"
+          python3 -m ruff check services/adsb-poller-py
+          python3 -m ruff format --check services/adsb-poller-py
+
+      - name: Test adsb-poller (Python)
+        run: python3 -m pytest services/adsb-poller-py/tests -q
+
+      - name: Lint ais-poller (Ruff)
+        run: |
+          python3 -m pip install -e "services/ais-poller-py[dev]"
+          python3 -m ruff check services/ais-poller-py
+          python3 -m ruff format --check services/ais-poller-py
+
+      - name: Test ais-poller (Python)
+        run: python3 -m pytest services/ais-poller-py/tests -q
 
       - name: Build
         run: pnpm build
@@ -110,5 +128,41 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.prefix }}-bus-poller:latest
             ${{ steps.meta.outputs.prefix }}-bus-poller:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build mrt-poller
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.mrt-poller
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-mrt-poller:latest
+            ${{ steps.meta.outputs.prefix }}-mrt-poller:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build adsb-poller
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.adsb-poller
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-adsb-poller:latest
+            ${{ steps.meta.outputs.prefix }}-adsb-poller:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build ais-poller
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/docker/Dockerfile.ais-poller
+          push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+          tags: |
+            ${{ steps.meta.outputs.prefix }}-ais-poller:latest
+            ${{ steps.meta.outputs.prefix }}-ais-poller:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

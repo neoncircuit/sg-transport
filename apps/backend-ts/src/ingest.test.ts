@@ -48,9 +48,7 @@ describe("listenGateway port fallback", () => {
 
 describe("ingest → websocket", () => {
   it("fans out poller vehicles to a WS client within a few seconds", async () => {
-    const gateway = await createGateway({ tickMs: 200, staleMs: 10_000 }).listen(
-      0,
-    );
+    const gateway = await createGateway({ tickMs: 200, staleMs: 10_000 }).listen(0);
     const base = `http://127.0.0.1:${gateway.port}`;
 
     try {

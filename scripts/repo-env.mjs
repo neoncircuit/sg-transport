@@ -21,12 +21,16 @@ export function scriptsDir() {
 
 export function loadEnvFile(file, env) {
   if (!existsSync(file)) return;
-  for (const line of readFileSync(file, "utf8").split(/\r?\n/)) {
+  const text = readFileSync(file, "utf8").replace(/^\uFEFF/, "");
+  for (const line of text.split(/\r?\n/)) {
     const t = line.trim();
     if (!t || t.startsWith("#")) continue;
     const i = t.indexOf("=");
     if (i < 0) continue;
-    const key = t.slice(0, i).trim();
+    const key = t
+      .slice(0, i)
+      .trim()
+      .replace(/^\uFEFF/, "");
     let value = t.slice(i + 1).trim();
     if (
       (value.startsWith('"') && value.endsWith('"')) ||

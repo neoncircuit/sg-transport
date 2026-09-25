@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1
+
+FROM node:22-alpine AS base
+RUN corepack enable && corepack prepare pnpm@10.14.0 --activate
+WORKDIR /app
+
+FROM base AS build
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json tsconfig.base.json ./
+COPY packages/shared-types-ts/package.json packages/shared-types-ts/
+COPY packages/ports-ts/package.json packages/ports-ts/
+COPY services/mrt-poller-ts/package.json services/mrt-poller-ts/
+RUN pnpm install --frozen-lockfile --filter @sg-transport/mrt-poller...
+COPY packages/shared-types-ts packages/shared-types-ts
+COPY packages/ports-ts packages/ports-ts
+COPY services/mrt-poller-ts services/mrt-poller-ts
+RUN pnpm --filter @sg-transport/mrt-poller... build \
+  && pnpm --filter @sg-transport/mrt-poller deploy --prod --legacy /out
+
+FROM node:22-alpine AS runtime
+WORKDIR /app
+ENV NODE_ENV=production
+# Rail paths inside the image (geometry is not part of the pnpm deploy out).
+ENV RAIL_GEOJSON=/app/data/rail.geojson
+ENV MRT_GTFS_SCHEDULE_JSON=/app/data/rail-gtfs-schedule.json
+COPY --from=build /out ./
+COPY packages/geometry-ts/data/rail.geojson /app/data/rail.geojson
+COPY services/mrt-poller-ts/data/rail-gtfs-schedule.json /app/data/rail-gtfs-schedule.json
+USER node
+CMD ["node", "dist/index.js"]

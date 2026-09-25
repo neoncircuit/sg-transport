@@ -55,10 +55,7 @@ function gatewayProxyPlugin(): Plugin {
     name: "sg-gateway-proxy",
     configureServer(server) {
       server.middlewares.use((req, res, next) => {
-        if (
-          req.url?.startsWith("/health") ||
-          req.url?.startsWith("/ingest")
-        ) {
+        if (req.url?.startsWith("/health") || req.url?.startsWith("/ingest")) {
           proxy.web(req, res, { target: gatewayHttpTarget() });
           return;
         }

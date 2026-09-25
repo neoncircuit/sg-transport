@@ -9,11 +9,11 @@ describe("FakeVehicleStore", () => {
     const second = store.tick(2_000);
 
     assert.ok(first.length >= 5);
-    assert.equal(first.every((v) => v.isInferred), true);
-    assert.deepEqual(
-      first.map((v) => v.id).sort(),
-      second.map((v) => v.id).sort(),
+    assert.equal(
+      first.every((v) => v.isInferred),
+      true,
     );
+    assert.deepEqual(first.map((v) => v.id).sort(), second.map((v) => v.id).sort());
   });
 
   it("moves vehicles between ticks", () => {

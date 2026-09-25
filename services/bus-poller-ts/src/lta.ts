@@ -1,25 +1,21 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { FeatureCollection } from "geojson";
 import type { VehiclePosition } from "@sg-transport/shared-types";
-import {
-  normalizeBusArrival,
-  type LtaBusArrivalResponse,
-} from "./normalize.js";
+import type { FeatureCollection } from "geojson";
+import { type LtaBusArrivalResponse, normalizeBusArrival } from "./normalize.js";
 import {
   ARRIVAL_UPDATE_MS,
-  DEFAULT_ARRIVAL_BUDGET,
-  DEFAULT_ARRIVAL_CONCURRENCY,
   classifyStops,
   classifyStopsFromGeoJSON,
+  DEFAULT_ARRIVAL_BUDGET,
+  DEFAULT_ARRIVAL_CONCURRENCY,
   estimateDailyArrivalCalls,
   planArrivalPoll,
   type ScheduledStop,
 } from "./schedule.js";
 
-const DEFAULT_BASE =
-  "https://datamall2.mytransport.sg/ltaodataservice";
+const DEFAULT_BASE = "https://datamall2.mytransport.sg/ltaodataservice";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_STOPS_GEOJSON = path.resolve(
@@ -31,9 +27,7 @@ let pollCursor = 0;
 let loggedBudgetOnce = false;
 
 function datamallBase(): string {
-  return (
-    process.env.LTA_DATAMALL_BASE?.trim() || DEFAULT_BASE
-  ).replace(/\/$/, "");
+  return (process.env.LTA_DATAMALL_BASE?.trim() || DEFAULT_BASE).replace(/\/$/, "");
 }
 
 function accountKey(): string {
@@ -48,12 +42,8 @@ function arrivalBudget(): number {
 }
 
 function arrivalConcurrency(): number {
-  const n = Number(
-    process.env.LTA_ARRIVAL_CONCURRENCY ?? DEFAULT_ARRIVAL_CONCURRENCY,
-  );
-  return Number.isFinite(n) && n > 0
-    ? Math.floor(n)
-    : DEFAULT_ARRIVAL_CONCURRENCY;
+  const n = Number(process.env.LTA_ARRIVAL_CONCURRENCY ?? DEFAULT_ARRIVAL_CONCURRENCY);
+  return Number.isFinite(n) && n > 0 ? Math.floor(n) : DEFAULT_ARRIVAL_CONCURRENCY;
 }
 
 function isArrivalPayload(value: unknown): value is LtaBusArrivalResponse {
@@ -179,11 +169,7 @@ export async function pollLiveArrivals(
   const budget = arrivalBudget();
   const concurrency = arrivalConcurrency();
   const scheduled = await resolveScheduledStops();
-  const { plan, nextCursor } = planArrivalPoll(
-    scheduled,
-    pollCursor,
-    budget,
-  );
+  const { plan, nextCursor } = planArrivalPoll(scheduled, pollCursor, budget);
   pollCursor = nextCursor;
 
   if (!loggedBudgetOnce) {

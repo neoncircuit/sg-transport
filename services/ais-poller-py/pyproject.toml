@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "sg-transport-ais-poller"
+version = "0.0.1"
+description = "AIS ship poller for SG Live (aisstream.io → gateway ingest)"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "ruff>=0.11"]
+
+[project.scripts]
+ais-poller = "ais_poller.main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

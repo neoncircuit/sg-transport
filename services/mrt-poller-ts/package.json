@@ -6,10 +6,10 @@
   "scripts": {
     "dev": "node ../../scripts/with-repo-env.mjs node --import tsx --watch src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "node dist/index.js",
+    "start": "node ../../scripts/with-repo-env.mjs node dist/index.js",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test src/**/*.test.ts"
+    "test": "node --import tsx --test src/*.test.ts",
+    "fetch:gtfs": "node ../../scripts/with-repo-env.mjs tsx src/fetch-gtfs.ts"
   },
   "dependencies": {
     "@sg-transport/ports": "workspace:*",

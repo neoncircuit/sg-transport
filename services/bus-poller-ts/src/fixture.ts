@@ -2,10 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { VehiclePosition } from "@sg-transport/shared-types";
-import {
-  normalizeBusArrival,
-  type LtaBusArrivalResponse,
-} from "./normalize.js";
+import { type LtaBusArrivalResponse, normalizeBusArrival } from "./normalize.js";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const DEFAULT_LTA_DIR = path.resolve(here, "../../../data/lta");

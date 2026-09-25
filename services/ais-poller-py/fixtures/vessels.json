@@ -1,0 +1,25 @@
+{
+  "vessels": [
+    {
+      "mmsi": "563000001",
+      "lat": 1.22,
+      "lon": 103.85,
+      "cog": 45.0,
+      "name": "DEMO ONE"
+    },
+    {
+      "mmsi": "563000002",
+      "lat": 1.26,
+      "lon": 103.92,
+      "cog": 220.5,
+      "name": "DEMO TWO"
+    },
+    {
+      "mmsi": "999999999",
+      "lat": 2.5,
+      "lon": 105.0,
+      "cog": 10,
+      "name": "OUTSIDE BOX"
+    }
+  ]
+}

@@ -31,10 +31,7 @@ function looksLikeNativeSkew(code) {
 try {
   ensureNativeDeps({ repoRoot, env });
 } catch (err) {
-  console.error(
-    "[dev]",
-    err instanceof Error ? err.message : err,
-  );
+  console.error("[dev]", err instanceof Error ? err.message : err);
   process.exit(1);
 }
 
@@ -44,10 +41,7 @@ if (first.signal) {
 }
 if (first.code === 0) process.exit(0);
 
-if (
-  process.env.SKIP_NATIVE_ENSURE !== "1" &&
-  looksLikeNativeSkew(first.code)
-) {
+if (process.env.SKIP_NATIVE_ENSURE !== "1" && looksLikeNativeSkew(first.code)) {
   console.warn(
     "[dev] stack failed — forcing native dependency heal and retrying once…",
   );
@@ -56,10 +50,7 @@ if (
     const { reinstallNativeDeps } = await import("./ensure-native-deps.mjs");
     reinstallNativeDeps(repoRoot, env);
   } catch (err) {
-    console.error(
-      "[dev]",
-      err instanceof Error ? err.message : err,
-    );
+    console.error("[dev]", err instanceof Error ? err.message : err);
     process.exit(1);
   }
   const second = await runTurbo();

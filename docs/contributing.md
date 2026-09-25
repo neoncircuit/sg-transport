@@ -14,13 +14,28 @@ Conventional Commits: `feat:`, `fix:`, `chore:`, `docs:`, `test:`.
 
 ```bash
 pnpm typecheck
-pnpm lint
+pnpm lint          # Biome (lint + format check)
+pnpm lint:fix     # apply Biome autofixes locally
 pnpm test
 pnpm build
 ```
 
-CI (`.github/workflows/ci.yml`) runs the same monorepo checks and builds
-Docker images for the gateway / bus-poller on push to `main`.
+Python pollers (`adsb-poller-py`, `ais-poller-py`):
+
+```bash
+python3 -m pip install -e "services/adsb-poller-py[dev]"
+python3 -m ruff check services/adsb-poller-py
+python3 -m ruff format --check services/adsb-poller-py
+python3 -m pytest services/adsb-poller-py/tests -q
+# same for services/ais-poller-py
+```
+
+CI (`.github/workflows/ci.yml`) runs Biome → typecheck → test → Ruff →
+pytest → build, then Docker image builds (GHCR push on `main`).
+
+To require these checks before merge, enable GitHub branch protection on
+`main` and require the **Lint · typecheck · test · build** status check
+(repo Settings → Branches — a one-time manual step).
 
 ## Boundaries
 

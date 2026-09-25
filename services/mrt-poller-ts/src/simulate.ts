@@ -1,11 +1,23 @@
-import type { FeatureCollection, LineString } from "geojson";
 import type { VehicleMode, VehiclePosition } from "@sg-transport/shared-types";
-import { pointAlongLine, type LonLat } from "./along-line.js";
+import {
+  colourForRailRef,
+  isRailLineOpen,
+  operatorForRailRef,
+  railServiceStatus,
+} from "@sg-transport/shared-types";
+import type { FeatureCollection, LineString } from "geojson";
+import { type LonLat, lineLengthMeters, pointAlongLine } from "./along-line.js";
+import { fleetSize, headwaySecFor, lineSchedule } from "./schedule.js";
+import { singaporeMinutesSinceMidnight } from "./service-hours.js";
 
 export interface RailLine {
   id: string;
   ref: string;
   mode: VehicleMode;
+  colour: string;
+  operator?: string;
+  /** open | construction | planned — only open lines get a simulated fleet. */
+  status: string;
   coords: LonLat[];
 }
 
@@ -34,26 +46,68 @@ export function railLinesFromGeoJSON(fc: FeatureCollection): RailLine[] {
     const id = String(props.id ?? `rail-${ref}`);
     const coords = (feature.geometry as LineString).coordinates as LonLat[];
     if (coords.length < 2) continue;
+    const colour =
+      typeof props.colour === "string" && props.colour.startsWith("#")
+        ? colourForRailRef(ref, props.colour)
+        : colourForRailRef(ref);
     lines.push({
       id,
       ref,
       mode: modeFromRoute(props.route, ref),
+      colour,
+      operator:
+        operatorForRailRef(ref) ??
+        (typeof props.operator === "string" ? props.operator : undefined),
+      status: railServiceStatus(ref),
       coords,
     });
   }
   return lines;
 }
 
-/** One train per rail feature, staggered starts, inferred motion. */
-export function seedTrains(lines: RailLine[]): SimTrain[] {
-  return lines.map((line, i) => ({
-    id: `sim-${line.ref}-${i}`,
-    line,
-    t: (i * 0.17) % 1,
-    // ~8–14 minutes end-to-end depending on line length feel.
-    speed: 0.0012 + (i % 5) * 0.00015,
-    dir: (i % 2 === 0 ? 1 : -1) as 1 | -1,
-  }));
+/**
+ * Scale published end-to-end minutes to this geometry's length so short
+ * OSM scraps (branches / loops) get fewer trains and shorter run times.
+ */
+function endToEndSecForLine(line: RailLine): number {
+  const schedule = lineSchedule(line.ref);
+  const publishedSec = schedule.endToEndMin * 60;
+  const meters = lineLengthMeters(line.coords);
+  // Full NSL-class corridor ~45–55 km; scale run time by length, clamp.
+  const REF_METERS = 45_000;
+  const scaled = publishedSec * Math.min(1.2, Math.max(0.15, meters / REF_METERS));
+  return Math.max(4 * 60, scaled);
+}
+
+/**
+ * Seed a headway-spaced fleet per rail feature using the current peak/off-peak
+ * headway. Speed comes from published end-to-end time (scaled by geometry).
+ */
+export function seedTrains(lines: RailLine[], now = new Date()): SimTrain[] {
+  const mins = singaporeMinutesSinceMidnight(now);
+  const trains: SimTrain[] = [];
+
+  for (const line of lines) {
+    // Under-construction / planned corridors stay on the static map only.
+    if (!isRailLineOpen(line.ref)) continue;
+    const schedule = lineSchedule(line.ref);
+    const endToEndSec = endToEndSecForLine(line);
+    const headway = headwaySecFor(schedule, mins);
+    const count = fleetSize(endToEndSec, headway);
+    const speed = 1 / endToEndSec;
+
+    for (let i = 0; i < count; i++) {
+      trains.push({
+        id: `sim-${line.ref}-${line.id}-${i}`,
+        line,
+        t: count === 1 ? 0.15 : i / count,
+        speed,
+        dir: (i % 2 === 0 ? 1 : -1) as 1 | -1,
+      });
+    }
+  }
+
+  return trains;
 }
 
 export function tickTrains(
@@ -72,8 +126,7 @@ export function tickTrains(
       train.dir = 1;
     }
     const pos = pointAlongLine(train.line.coords, train.t);
-    const bearing =
-      train.dir === 1 ? pos.bearing : (pos.bearing + 180) % 360;
+    const bearing = train.dir === 1 ? pos.bearing : (pos.bearing + 180) % 360;
     out.push({
       id: train.id,
       mode: train.line.mode,
@@ -82,6 +135,9 @@ export function tickTrains(
       bearing,
       observedAt: now,
       isInferred: true,
+      lineRef: train.line.ref,
+      color: train.line.colour,
+      operator: train.line.operator,
     });
   }
   return out;

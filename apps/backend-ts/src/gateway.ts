@@ -1,10 +1,10 @@
 import { createServer, type Server } from "node:http";
+import { findFreePort } from "@sg-transport/ports";
 import type {
   VehiclePosition,
   VehicleSnapshotMessage,
 } from "@sg-transport/shared-types";
-import { findFreePort } from "@sg-transport/ports";
-import { WebSocketServer, type WebSocket } from "ws";
+import { type WebSocket, WebSocketServer } from "ws";
 import { VehicleStore } from "./vehicle-store.js";
 
 export interface GatewayOptions {
@@ -215,18 +215,14 @@ export async function listenGateway(
     const port = await findFreePort(preferred + i, maxAttempts - i);
     try {
       if (port !== preferred) {
-        console.warn(
-          `[backend-ts] port ${preferred} in use, binding ${port}…`,
-        );
+        console.warn(`[backend-ts] port ${preferred} in use, binding ${port}…`);
       }
       return await createGateway(options).listen(port);
     } catch (err) {
       lastErr = err;
       const code = (err as NodeJS.ErrnoException)?.code;
       if (code !== "EADDRINUSE") throw err;
-      console.warn(
-        `[backend-ts] port ${port} raced busy, trying another…`,
-      );
+      console.warn(`[backend-ts] port ${port} raced busy, trying another…`);
     }
   }
 

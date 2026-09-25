@@ -1,0 +1,35 @@
+{
+  "ac": [
+    {
+      "hex": "7504a1",
+      "flight": "SIA123  ",
+      "lat": 1.3521,
+      "lon": 103.8198,
+      "track": 90.5,
+      "alt_baro": 5000,
+      "gs": 220
+    },
+    {
+      "hex": "A1B2C3",
+      "flight": "TG410",
+      "lat": 1.36,
+      "lon": 103.99,
+      "true_heading": 180,
+      "alt_baro": 3000
+    },
+    {
+      "hex": "dead01",
+      "flight": "FAROUT",
+      "lat": 2.5,
+      "lon": 105.0,
+      "track": 10
+    },
+    {
+      "hex": "nopos",
+      "flight": "NONE",
+      "track": 45
+    }
+  ],
+  "msg": "No error",
+  "total": 4
+}

@@ -1,7 +1,7 @@
-import nearestPointOnLine from "@turf/nearest-point-on-line";
-import { lineString, point } from "@turf/helpers";
-import type { Feature, FeatureCollection, LineString } from "geojson";
 import type { VehiclePosition } from "@sg-transport/shared-types";
+import { lineString, point } from "@turf/helpers";
+import nearestPointOnLine from "@turf/nearest-point-on-line";
+import type { Feature, FeatureCollection, LineString } from "geojson";
 
 export interface SnapOptions {
   /** Max snap distance in kilometres (Turf default units). */

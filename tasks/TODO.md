@@ -57,7 +57,7 @@ Public URL intentionally **not** part of Phase 0 — see Phase 8.
 the frontend can render and vehicles can be snapped to.
 
 - [x] `packages/geometry-ts`: scaffold + LTA bus extractor (needs
-      `LTA_ACCOUNT_KEY`; stop-to-stop polylines until OSM snap)
+      `LTA_ACCOUNT_KEY`; stop-to-stop polylines + optional `BUS_ROUTE_SNAP=osrm`)
 - [x] Script to extract MRT/LRT `route=subway`/`route=light_rail` relations
       via Overpass, output GeoJSON (+ copy into frontend `public/geometry`)
 - [ ] Manual spot-check of at least 3 rail lines against real alignment
@@ -128,10 +128,13 @@ transport before touching anything non-essential. Ship the honest version of
 the train layer (DESIGN.md §4, option 3) before attempting anything fragile.
 
 - [x] `services/mrt-poller-ts`: simulate train positions along the Phase 1
-      rail geometry (headway/schedule refinement later); `isInferred: true`
-- [ ] Derive per-line headways and first/last train times from LTA static
-      / GTFS data to replace constant speeds
-- [ ] CI/test pattern consistent with other pollers
+      rail geometry; `isInferred: true`
+- [x] Per-line first/last + peak/off-peak headways (builtin table + optional
+      community GTFS overlay via `pnpm --filter @sg-transport/mrt-poller fetch:gtfs`)
+- [x] Under-construction lines (JRL / CRL): geometry-only, dashed on map,
+      no simulated fleet until `status: open`
+- [x] CI/test pattern consistent with other pollers (turbo scripts, WSL-safe
+      `src/*.test.ts` globs, `Dockerfile.mrt-poller` + GHCR build)
 
 **Done when**: trains move on the map on a plausible schedule, clearly
 labeled as non-live if you choose to expose that distinction. At this point
@@ -143,6 +146,11 @@ before planes/ships exist.
 ---
 
 ## Phase 4 — MRT/LRT, live inference (stretch goal)
+
+**Status**: **deferred** after Phase 3 — needs multi-day validation of the
+unofficial SMRT endpoint and is explicitly allowed to stall. Phase 3
+scheduled/simulated trains remain the production train layer. Revisit after
+planes/ships or a public deploy if the endpoint looks durable.
 
 **Goal**: only attempt this once Phase 3 is stable and deployed — this
 phase is explicitly allowed to fail or stall without blocking a release.
@@ -170,13 +178,11 @@ is a reasonable point to consider the core public-transport map complete.
 addition, picked up once the core map is solid. Also proves the
 architecture actually is layer-agnostic as designed.
 
-- [ ] `services/adsb-poller-py`: pull from adsb.lol or ADSBExchange, filter to
-      a bounding box around Singapore/Changi, normalize to `VehiclePosition`
-      with `mode: "plane"`
-- [ ] Client-side layer toggle (bus/train/plane/etc.) — first real test of
+- [x] `services/adsb-poller-py`: pull from adsb.lol (Singapore/Changi bbox),
+      normalize to `VehiclePosition` with `mode: "plane"`; live → fixture → empty
+- [x] Client-side layer toggle (bus/train/plane/etc.) — first real test of
       the mode field pulling weight
-- [ ] CI: same test/build pattern as `bus-poller-ts`, copy-pasted deliberately
-      to confirm the poller pattern is actually reusable, not just similar
+- [x] CI: Docker + GHCR build pattern matching other pollers
 
 **Done when**: planes render alongside buses and trains, independently
 toggleable.
@@ -190,12 +196,14 @@ toggleable.
 over the London reference project — but still secondary to the public
 transport layers.
 
-- [ ] `services/ais-poller-py`: AISHub or MarineTraffic API (or a personal AIS
-      receiver if you want to go that far) scoped to the Singapore Strait /
-      port limits
-- [ ] Confirm AIS provider licensing before public deploy — some AIS
-      aggregators restrict redistribution more tightly than ADS-B sources do
-- [ ] Normalize MMSI-based vessel IDs into `VehiclePosition`
+- [x] `services/ais-poller-py`: [aisstream.io](https://aisstream.io) WebSocket
+      (free API key) scoped to Singapore Strait / port bbox; fixture cascade
+      when no key / offline
+- [x] Licensing: aisstream free key is for local/dev; confirm redistribution
+      terms before public deploy (Phase 8). Do not mirror commercial AISHub /
+      MarineTraffic feeds without checking their ToS.
+- [x] Normalize MMSI-based vessel IDs into `VehiclePosition`
+- [x] Docker + CI (pytest + GHCR image)
 
 **Done when**: all four live layers (bus, train, plane, ship) run
 concurrently without one poller's failure affecting the others — this is

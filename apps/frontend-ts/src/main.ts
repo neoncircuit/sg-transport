@@ -1,28 +1,42 @@
 import type { VehicleMode, VehiclePosition } from "@sg-transport/shared-types";
+import { railLineInfo } from "@sg-transport/shared-types";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   ALL_MODES,
-  BASEMAP_STYLE,
+  basemapStyleFor,
+  MODE_LABELS,
   SINGAPORE_CENTER,
   SINGAPORE_ZOOM,
   wsUrl,
 } from "./config";
 import {
-  THEMES,
+  filterByModeVisibility,
+  type ModeVisibility,
+  readStoredModeVisibility,
+  writeStoredModeVisibility,
+} from "./mode-visibility";
+import {
+  enrichRailFeatureCollection,
+  ensureStaticGeometryLayers,
+  railRefsInCollection,
+} from "./static-layers";
+import {
   applyTheme,
   isThemeId,
   readStoredTheme,
+  THEMES,
   type ThemeDefinition,
   type ThemeId,
 } from "./themes";
 import { VehicleSocket } from "./vehicle-socket";
-import { ensureStaticGeometryLayers } from "./static-layers";
-import { HIT_LAYER_ID, ensureVehicleLayer, updateVehicles } from "./vehicles-layer";
+import { ensureVehicleLayer, HIT_LAYER_ID, updateVehicles } from "./vehicles-layer";
 
 const statusEl = document.querySelector<HTMLParagraphElement>("#status");
 const liveDotEl = document.querySelector<HTMLSpanElement>("#live-dot");
-const themeSwatchesEl = document.querySelector<HTMLUListElement>("#theme-swatches");
+const themeSwatchesEl = document.querySelector<HTMLElement>("#theme-swatches");
+const railLegendEl = document.querySelector<HTMLUListElement>("#rail-legend");
+const legendEl = document.querySelector<HTMLElement>("#legend");
 const sheetEl = document.querySelector<HTMLElement>("#sheet");
 const sheetBodyEl = document.querySelector<HTMLElement>("#sheet-body");
 const sheetToggleEl = document.querySelector<HTMLButtonElement>("#sheet-toggle");
@@ -32,7 +46,9 @@ const versionBadgeEl = document.querySelector<HTMLElement>("#version-badge");
 
 let activeTheme: ThemeDefinition = applyTheme(readStoredTheme());
 let latestVehicles: VehiclePosition[] = [];
+let modeVisibility: ModeVisibility = readStoredModeVisibility();
 let socket: VehicleSocket | null = null;
+let remountingStyle = false;
 
 if (versionBadgeEl) {
   versionBadgeEl.textContent = __APP_VERSION_BADGE__;
@@ -76,6 +92,49 @@ function updateLegend(vehicles: VehiclePosition[]): void {
   }
 }
 
+function paintVehicles(map: maplibregl.Map, vehicles: VehiclePosition[]): void {
+  updateVehicles(
+    map,
+    filterByModeVisibility(vehicles, modeVisibility) as VehiclePosition[],
+    activeTheme,
+  );
+}
+
+function syncModeToggleUi(): void {
+  if (!legendEl) return;
+  for (const mode of ALL_MODES) {
+    const btn = legendEl.querySelector<HTMLElement>(`[data-mode="${mode}"]`);
+    if (!btn) continue;
+    const on = modeVisibility[mode] !== false;
+    btn.classList.toggle("off", !on);
+    btn.setAttribute("aria-pressed", on ? "true" : "false");
+    const label = MODE_LABELS[mode];
+    btn.title = on ? `Hide ${label}` : `Show ${label}`;
+  }
+}
+
+function wireModeToggles(map: maplibregl.Map): void {
+  if (!legendEl) return;
+  for (const mode of ALL_MODES) {
+    const btn = legendEl.querySelector<HTMLElement>(`[data-mode="${mode}"]`);
+    if (!btn) continue;
+    const toggle = () => {
+      modeVisibility = {
+        ...modeVisibility,
+        [mode]: !modeVisibility[mode],
+      };
+      writeStoredModeVisibility(modeVisibility);
+      syncModeToggleUi();
+      if (!remountingStyle) paintVehicles(map, latestVehicles);
+    };
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      toggle();
+    });
+  }
+  syncModeToggleUi();
+}
+
 function setSheetExpanded(expanded: boolean): void {
   if (!sheetEl || !sheetBodyEl || !sheetToggleEl) return;
   sheetEl.dataset.expanded = expanded ? "true" : "false";
@@ -86,7 +145,9 @@ function setSheetExpanded(expanded: boolean): void {
 
 function syncThemeSwatches(selected: ThemeId): void {
   if (!themeSwatchesEl) return;
-  for (const btn of themeSwatchesEl.querySelectorAll<HTMLButtonElement>(".theme-swatch")) {
+  for (const btn of themeSwatchesEl.querySelectorAll<HTMLButtonElement>(
+    ".theme-swatch",
+  )) {
     const id = btn.dataset.themeId;
     btn.setAttribute("aria-checked", id === selected ? "true" : "false");
   }
@@ -97,7 +158,6 @@ function renderThemeSwatches(onSelect: (id: ThemeId) => void): void {
   themeSwatchesEl.replaceChildren();
 
   for (const theme of THEMES) {
-    const li = document.createElement("li");
     const btn = document.createElement("button");
     btn.type = "button";
     btn.className = "theme-swatch";
@@ -107,16 +167,82 @@ function renderThemeSwatches(onSelect: (id: ThemeId) => void): void {
     btn.title = `${theme.label} — ${theme.blurb}`;
     btn.setAttribute("aria-label", `${theme.label}: ${theme.blurb}`);
     btn.addEventListener("click", () => onSelect(theme.id));
-    li.append(btn);
-    themeSwatchesEl.append(li);
+    themeSwatchesEl.append(btn);
+  }
+}
+
+function mountOverlayLayers(map: maplibregl.Map): void {
+  ensureVehicleLayer(map, activeTheme);
+  void ensureStaticGeometryLayers(map).then(() => {
+    paintVehicles(map, latestVehicles);
+  });
+  paintVehicles(map, latestVehicles);
+}
+
+function renderRailLegend(refs: string[]): void {
+  if (!railLegendEl) return;
+  railLegendEl.replaceChildren();
+  for (const ref of refs) {
+    const info = railLineInfo(ref);
+    const li = document.createElement("li");
+    if (info?.status === "construction" || info?.status === "planned") {
+      li.classList.add("rail-uc");
+    }
+    const swatch = document.createElement("span");
+    swatch.className = "swatch";
+    const colour = info?.colour ?? "#8899aa";
+    swatch.style.setProperty("--swatch", colour);
+    swatch.style.background = colour;
+    const code = document.createElement("span");
+    code.className = "rail-ref";
+    code.textContent = ref;
+    code.title = info?.label ?? ref;
+    const op = document.createElement("span");
+    op.className = "rail-op";
+    if (info?.status === "construction") {
+      op.textContent = "U/C";
+      op.title = "Under construction — shown on map, no simulated trains";
+    } else if (info?.status === "planned") {
+      op.textContent = "planned";
+    } else {
+      op.textContent = info?.operator ?? "";
+    }
+    li.append(swatch, code, op);
+    railLegendEl.append(li);
+  }
+}
+
+async function loadRailLegend(): Promise<void> {
+  try {
+    const res = await fetch("/geometry/rail.geojson");
+    if (!res.ok) return;
+    const fc = enrichRailFeatureCollection(await res.json());
+    renderRailLegend(railRefsInCollection(fc));
+  } catch {
+    // geometry optional at boot
   }
 }
 
 function setTheme(id: ThemeId, map: maplibregl.Map | null): void {
+  const previous = activeTheme;
   activeTheme = applyTheme(id);
   syncThemeSwatches(id);
-  if (map?.isStyleLoaded()) {
-    updateVehicles(map, latestVehicles, activeTheme);
+  if (!map) return;
+
+  const nextStyle = basemapStyleFor(activeTheme.basemap);
+  const prevStyle = basemapStyleFor(previous.basemap);
+  if (nextStyle !== prevStyle) {
+    remountingStyle = true;
+    map.setStyle(nextStyle);
+    map.once("style.load", () => {
+      remountingStyle = false;
+      mountOverlayLayers(map);
+    });
+    return;
+  }
+
+  if (map.isStyleLoaded() && !remountingStyle) {
+    paintVehicles(map, latestVehicles);
   }
 }
 
@@ -150,7 +276,7 @@ function centerOnMe(map: maplibregl.Map): void {
 
 const map = new maplibregl.Map({
   container: "map",
-  style: BASEMAP_STYLE,
+  style: basemapStyleFor(activeTheme.basemap),
   center: SINGAPORE_CENTER,
   zoom: SINGAPORE_ZOOM,
   pitch: 0,
@@ -160,9 +286,13 @@ const map = new maplibregl.Map({
   pitchWithRotate: false,
 });
 
-map.addControl(new maplibregl.NavigationControl({ visualizePitch: false }), "top-right");
+map.addControl(
+  new maplibregl.NavigationControl({ visualizePitch: false }),
+  "top-right",
+);
 
 renderThemeSwatches((id) => setTheme(id, map));
+wireModeToggles(map);
 sheetToggleEl?.addEventListener("click", () => {
   const open = sheetEl?.dataset.expanded !== "true";
   setSheetExpanded(Boolean(open));
@@ -170,15 +300,21 @@ sheetToggleEl?.addEventListener("click", () => {
 locateBtn?.addEventListener("click", () => centerOnMe(map));
 
 map.on("load", () => {
-  ensureVehicleLayer(map, activeTheme);
-  void ensureStaticGeometryLayers(map);
+  mountOverlayLayers(map);
+  void loadRailLegend();
 
   map.on("click", HIT_LAYER_ID, (e) => {
     const feature = e.features?.[0];
     if (!feature) return;
     const id = String(feature.properties?.id ?? "");
     const mode = String(feature.properties?.mode ?? "");
-    setStatus(`${mode.toUpperCase()} · ${id}`, true);
+    const lineRef = String(feature.properties?.lineRef ?? "");
+    const operator = String(feature.properties?.operator ?? "");
+    const bits = [mode.toUpperCase()];
+    if (lineRef) bits.push(lineRef);
+    if (operator) bits.push(operator);
+    bits.push(id);
+    setStatus(bits.join(" · "), true);
     setSheetExpanded(true);
   });
 
@@ -194,7 +330,9 @@ map.on("load", () => {
     wsUrl(),
     (vehicles) => {
       latestVehicles = vehicles;
-      updateVehicles(map, vehicles, activeTheme);
+      if (!remountingStyle) {
+        paintVehicles(map, vehicles);
+      }
       updateLegend(vehicles);
       setStatus(fleetStatusLabel(vehicles), true);
     },

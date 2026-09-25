@@ -58,7 +58,10 @@ export function formatVersionBadge(describe) {
   return `v${semver}+${n}${dirty}`;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (
+  process.argv[1] &&
+  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)
+) {
   const version = resolveAppVersion();
   const sha = resolveGitSha();
   if (process.argv.includes("--json")) {

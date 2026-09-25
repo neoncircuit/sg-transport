@@ -23,6 +23,17 @@ export interface VehiclePosition {
    * Phase 0 fake vehicles are always inferred.
    */
   isInferred: boolean;
+  /**
+   * Optional route / line code (e.g. NSL, 190) for per-line styling.
+   */
+  lineRef?: string;
+  /**
+   * Optional hex colour override (e.g. official MRT line colour).
+   * When set, the map prefers this over the theme mode colour.
+   */
+  color?: string;
+  /** Optional operator label (e.g. SMRT, SBS Transit). */
+  operator?: string;
 }
 
 /** Message the gateway broadcasts to connected map clients. */
@@ -36,7 +47,7 @@ export interface VehicleSnapshotMessage {
 export function isVehicleSnapshotMessage(
   value: unknown,
 ): value is VehicleSnapshotMessage {
-  if (typeof value !== "object" || value === null) return false;
+  if (!value || typeof value !== "object") return false;
   const msg = value as Record<string, unknown>;
   return (
     msg.type === "snapshot" &&
@@ -44,3 +55,16 @@ export function isVehicleSnapshotMessage(
     Array.isArray(msg.vehicles)
   );
 }
+
+export {
+  colourForRailRef,
+  isRailLineOpen,
+  normalizeRailRef,
+  operatorForRailRef,
+  RAIL_LINES,
+  type RailLineInfo,
+  type RailOperator,
+  type RailServiceStatus,
+  railLineInfo,
+  railServiceStatus,
+} from "./rail-lines.js";

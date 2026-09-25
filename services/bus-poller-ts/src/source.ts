@@ -1,12 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type { FeatureCollection } from "geojson";
 import type { VehiclePosition } from "@sg-transport/shared-types";
-import {
-  hasArrivalFixtures,
-  vehiclesFromArrivalFixtures,
-} from "./fixture.js";
+import type { FeatureCollection } from "geojson";
+import { hasArrivalFixtures, vehiclesFromArrivalFixtures } from "./fixture.js";
 import { pollLiveArrivals } from "./lta.js";
 import { SkeletonBusSource } from "./skeleton.js";
 import { linesFromGeoJSON, snapVehiclesToRoutes } from "./snap.js";
@@ -36,9 +33,7 @@ async function loadBusRoutes(): Promise<FeatureCollection | null> {
   }
 }
 
-async function maybeSnap(
-  vehicles: VehiclePosition[],
-): Promise<VehiclePosition[]> {
+async function maybeSnap(vehicles: VehiclePosition[]): Promise<VehiclePosition[]> {
   if (process.env.BUS_SNAP === "0") return vehicles;
   const routes = await loadBusRoutes();
   if (!routes || routes.features.length === 0) return vehicles;

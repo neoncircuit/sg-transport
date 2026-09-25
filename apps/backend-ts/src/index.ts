@@ -1,7 +1,4 @@
-import {
-  preferredGatewayPort,
-  writeGatewayPort,
-} from "@sg-transport/ports";
+import { preferredGatewayPort, writeGatewayPort } from "@sg-transport/ports";
 import { listenGateway } from "./gateway.js";
 import { resolveAppVersion, resolveGitSha } from "./version.js";
 

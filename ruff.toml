@@ -1,0 +1,13 @@
+# Shared Ruff config for Python pollers (adsb / ais).
+# Each service lists Ruff in its [project.optional-dependencies] dev extra.
+
+target-version = "py311"
+line-length = 88
+
+[lint]
+select = ["E", "F", "I", "UP", "B", "SIM"]
+
+[format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "lf"

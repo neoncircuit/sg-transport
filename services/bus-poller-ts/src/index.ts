@@ -1,5 +1,5 @@
-import { loadRepoEnv } from "./env.js";
 import { waitForGatewayUrl } from "@sg-transport/ports";
+import { loadRepoEnv } from "./env.js";
 import { ARRIVAL_UPDATE_MS } from "./lta.js";
 import { collectVehicles } from "./source.js";
 
@@ -51,9 +51,7 @@ async function pushToGateway(
     } catch (err) {
       lastErr = err;
       const msg = err instanceof Error ? err.message : String(err);
-      console.warn(
-        `[bus-poller] ingest attempt ${i + 1}/${attempts} failed (${msg})`,
-      );
+      console.warn(`[bus-poller] ingest attempt ${i + 1}/${attempts} failed (${msg})`);
       await sleep(250 * (i + 1));
     }
   }
@@ -74,9 +72,7 @@ async function main(): Promise<void> {
     );
   }
   if (process.env.NODE_EXTRA_CA_CERTS) {
-    console.log(
-      `[bus-poller] NODE_EXTRA_CA_CERTS=${process.env.NODE_EXTRA_CA_CERTS}`,
-    );
+    console.log(`[bus-poller] NODE_EXTRA_CA_CERTS=${process.env.NODE_EXTRA_CA_CERTS}`);
   }
   console.log("[bus-poller] waiting for gateway…");
   const gatewayUrl = await waitForGatewayUrl();

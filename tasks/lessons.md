@@ -61,7 +61,8 @@ short and actionable.
   Default chrome is a **bottom sheet** (peek + expand), not a desktop
   sidebar. Desktop gets a docked panel at `min-width: 720px`.
 - Brand **SG Live** must still read clearly in the peek state.
-- Default visual language: **harbour night** + alternate themes via
+- Default visual language: **daylight** (OpenFreeMap Liberty) for
+  readable outlines; night themes (`harbour`, etc.) still available via
   `data-theme` + localStorage.
 - Touch: ≥44px targets; invisible vehicle hit layer (~18px radius) for taps.
 - **Locate me** is core chrome, not a nice-to-have.

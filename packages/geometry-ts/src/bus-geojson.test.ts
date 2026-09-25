@@ -60,8 +60,6 @@ describe("committed bus fixtures", () => {
     }>(path.join(root, "BusRoutes.json"));
     const lines = buildServiceLines(stops, routes);
     assert.ok(lines.features.length >= 1);
-    assert.ok(
-      (lines.features[0]!.geometry.coordinates as number[][]).length >= 2,
-    );
+    assert.ok((lines.features[0]!.geometry.coordinates as number[][]).length >= 2);
   });
 });

@@ -71,6 +71,34 @@ pnpm --filter @sg-transport/backend test
 pnpm --filter @sg-transport/bus-poller dev
 ```
 
+### ADS-B planes (Python)
+
+Runs outside turbo. With the gateway up:
+
+```bash
+cd services/adsb-poller-py
+python -m venv .venv && source .venv/bin/activate   # Windows: .venv\Scripts\activate
+pip install -e ".[dev]"
+python -m adsb_poller
+# or offline: ADSB_SOURCE=fixture python -m adsb_poller
+```
+
+Tap **Air** in the map legend to show planes (hidden by default).
+
+### AIS ships (Python)
+
+```bash
+cd services/ais-poller-py
+python -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+# free key from https://aisstream.io/apikeys — or omit for fixture-only
+export AIS_API_KEY=…   # optional
+python -m ais_poller
+```
+
+Tap **Sea** in the legend to show ships. Confirm aisstream redistribution
+terms before any public deploy.
+
 ## Environment
 
 See [`.env.example`](../.env.example). Highlights:
@@ -91,6 +119,11 @@ See [`.env.example`](../.env.example). Highlights:
 | `BUS_SOURCE` | `auto` \| `fixture` \| `skeleton` \| `lta` |
 | `BUS_SNAP` | `0` disables route snap |
 | `LTA_DATA_DIR` | Override local dump root (default `data/lta`) |
+| `ADSB_SOURCE` | `auto` \| `live` \| `fixture` \| `empty` (adsb-poller-py) |
+| `ADSB_FIXTURE` | Path to sample aircraft JSON |
+| `AIS_API_KEY` | aisstream.io key (required for live ships) |
+| `AIS_SOURCE` | `auto` \| `live` \| `fixture` \| `empty` |
+| `AIS_FIXTURE` | Path to sample vessels JSON |
 | `RAIL_GEOJSON` / `BUS_GEOJSON` | Override geometry paths for pollers |
 
 ## Verification before you call work “done”
@@ -109,6 +142,9 @@ pnpm build   # when the change affects ship artifacts
 ```bash
 docker build -f infra/docker/Dockerfile.backend -t sg-transport-backend .
 docker build -f infra/docker/Dockerfile.bus-poller -t sg-transport-bus-poller .
+docker build -f infra/docker/Dockerfile.mrt-poller -t sg-transport-mrt-poller .
+docker build -f infra/docker/Dockerfile.adsb-poller -t sg-transport-adsb-poller .
+docker build -f infra/docker/Dockerfile.ais-poller -t sg-transport-ais-poller .
 docker run --rm -p 8787:8787 sg-transport-backend
 ```
 

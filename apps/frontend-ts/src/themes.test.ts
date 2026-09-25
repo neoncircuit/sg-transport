@@ -1,12 +1,14 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { ALL_MODES } from "./config.js";
-import { DEFAULT_THEME, THEMES, getTheme, isThemeId } from "./themes.js";
+import { ALL_MODES, basemapStyleFor } from "./config.js";
+import { DEFAULT_THEME, getTheme, isThemeId, THEMES } from "./themes.js";
 
 describe("themes", () => {
-  it("includes harbour as default", () => {
-    assert.equal(DEFAULT_THEME, "harbour");
-    assert.equal(getTheme("harbour").id, "harbour");
+  it("includes daylight as default with a light basemap", () => {
+    assert.equal(DEFAULT_THEME, "daylight");
+    assert.equal(getTheme("daylight").basemap, "light");
+    assert.match(basemapStyleFor("light"), /liberty/);
+    assert.match(basemapStyleFor("dark"), /dark/);
   });
 
   it("covers every VehicleMode for each theme", () => {
@@ -16,6 +18,8 @@ describe("themes", () => {
       }
       assert.ok(theme.label.length > 0);
       assert.ok(isThemeId(theme.id));
+      assert.ok(theme.basemap === "light" || theme.basemap === "dark");
+      assert.match(theme.themeColor, /^#/);
     }
   });
 

@@ -1,11 +1,7 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
-import {
-  findFreePort,
-  isPortTaken,
-  preferredGatewayPort,
-} from "./index.js";
 import { createServer } from "node:net";
+import { describe, it } from "node:test";
+import { findFreePort, isPortTaken, preferredGatewayPort } from "./index.js";
 
 describe("ports", () => {
   it("reports a preferred default of 8787", () => {

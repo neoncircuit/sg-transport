@@ -2,15 +2,39 @@
 :root {
   --font-display: "Bricolage Grotesque", "Segoe UI", sans-serif;
   --font-body: "IBM Plex Sans", "Segoe UI", sans-serif;
-  --theme-transition: background-color 0.35s ease, color 0.35s ease,
-    border-color 0.35s ease, box-shadow 0.35s ease;
+  --theme-transition:
+    background-color 0.35s ease, color 0.35s ease, border-color 0.35s ease,
+    box-shadow 0.35s ease;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
   --touch: 2.75rem; /* ~44px minimum touch target */
 }
 
-/* Harbour night — default */
+/* Daylight — default (readable outlines on Liberty basemap) */
 :root,
+[data-theme="daylight"] {
+  --ink: #1a2330;
+  --muted: #5a6b7d;
+  --panel: rgba(255, 255, 255, 0.92);
+  --panel-edge: rgba(26, 35, 48, 0.12);
+  --accent-live: #0d8f6a;
+  --accent-live-rgb: 13, 143, 106;
+  --accent-warm: #c45c12;
+  --brand-from: #1a2330;
+  --brand-mid: #c45c12;
+  --brand-to: #0d8f6a;
+  --status-live: #0a6b50;
+  --link: #0b5cad;
+  --map-void: #e8eef4;
+  --hairline: rgba(26, 35, 48, 0.1);
+  --mode-bus: #c45c12;
+  --mode-mrt: #c62828;
+  --mode-lrt: #e65100;
+  --mode-plane: #0277bd;
+  --mode-ship: #00838f;
+}
+
+/* Harbour night */
 [data-theme="harbour"] {
   --ink: #eef3f7;
   --muted: #8b9bab;
@@ -161,7 +185,9 @@ body {
   backdrop-filter: blur(16px) saturate(1.15);
   -webkit-backdrop-filter: blur(16px) saturate(1.15);
   box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.4);
-  transition: var(--theme-transition), transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+  transition:
+    var(--theme-transition),
+    transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
   animation: sheet-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
@@ -310,22 +336,47 @@ body {
 }
 
 .legend {
-  list-style: none;
   margin: 0.85rem 0 0;
   padding: 0;
+  border: none;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.15rem 0.75rem;
+  min-inline-size: 0;
 }
 
-.legend li {
+.legend button {
   display: flex;
   align-items: center;
   gap: 0.45rem;
   min-height: 2.25rem;
+  font: inherit;
   font-size: 0.8rem;
   color: var(--muted);
   font-weight: 500;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  border-radius: 0.35rem;
+  padding: 0 0.2rem;
+  text-align: left;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.legend button:focus-visible {
+  outline: 2px solid var(--accent, #0277bd);
+  outline-offset: 2px;
+}
+
+.legend button.off {
+  opacity: 0.42;
+}
+
+.legend button.off .swatch {
+  box-shadow: none;
+  background: transparent !important;
+  border: 2px solid currentColor;
 }
 
 .legend b {
@@ -364,6 +415,82 @@ body {
 .legend [data-mode="ship"] .swatch {
   background: var(--mode-ship);
   color: var(--mode-ship);
+}
+
+.rail-legend-block {
+  margin-top: 0.85rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--hairline);
+}
+
+.rail-legend-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.4rem;
+}
+
+.rail-legend {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.2rem 0.65rem;
+}
+
+.rail-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 1.75rem;
+  font-size: 0.72rem;
+  color: var(--ink);
+  font-weight: 500;
+}
+
+.rail-legend .swatch {
+  width: 0.85rem;
+  height: 0.28rem;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.rail-legend .rail-ref {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 2.6rem;
+}
+
+.rail-legend .rail-op {
+  margin-left: auto;
+  font-size: 0.65rem;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.rail-legend li.rail-uc .swatch {
+  opacity: 0.55;
+  background: repeating-linear-gradient(
+    90deg,
+    var(--swatch, #8899aa) 0 3px,
+    transparent 3px 6px
+  );
+}
+
+.rail-legend li.rail-uc .rail-op {
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.rail-legend-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.65rem;
+  line-height: 1.4;
+  color: var(--muted);
 }
 
 .theme-picker {
@@ -414,6 +541,9 @@ body {
     0 0 0 1px var(--panel-edge);
 }
 
+.theme-swatch[data-theme-id="daylight"] {
+  background: linear-gradient(135deg, #ffffff 25%, #c45c12 70%, #0d8f6a 100%);
+}
 .theme-swatch[data-theme-id="harbour"] {
   background: linear-gradient(135deg, #e8a54b 40%, #3dd6a5 100%);
 }

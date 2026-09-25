@@ -7,12 +7,13 @@ node_modules
 .claude
 *.md
 !README.md
+!services/adsb-poller-py/README.md
+!services/ais-poller-py/README.md
 apps/frontend-ts
-services/mrt-poller-ts
-services/adsb-poller-py
-services/ais-poller-py
 data
 docs
 coverage
 .env
 .env.*
+**/.venv
+**/__pycache__

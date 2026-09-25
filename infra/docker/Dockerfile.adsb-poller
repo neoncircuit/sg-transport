@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.12-slim AS build
+WORKDIR /app
+COPY services/adsb-poller-py/pyproject.toml services/adsb-poller-py/README.md ./
+COPY services/adsb-poller-py/src ./src
+COPY services/adsb-poller-py/fixtures ./fixtures
+RUN pip install --no-cache-dir .
+
+FROM python:3.12-slim AS runtime
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+ENV ADSB_SOURCE=auto
+ENV ADSB_FIXTURE=/app/fixtures/aircraft.json
+COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=build /usr/local/bin/adsb-poller /usr/local/bin/adsb-poller
+COPY services/adsb-poller-py/fixtures /app/fixtures
+USER nobody
+CMD ["adsb-poller"]

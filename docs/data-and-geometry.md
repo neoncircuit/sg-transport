@@ -26,6 +26,14 @@ Controlled by `BUS_GEOMETRY_SOURCE` (`auto` default):
 
 Force a path with `BUS_GEOMETRY_SOURCE=live|local|fixture`.
 
+### Road-following
+
+`BUS_ROUTE_SNAP=off` (default) draws straight stop-to-stop chords — fine for
+wiring, but lines can cut forests / camps / water.
+
+`BUS_ROUTE_SNAP=osrm` routes each consecutive stop pair through OSRM and
+caches edges in `data/lta/osrm-edges/`. Use this for map-accurate polylines.
+
 Partial single-page API downloads often **don’t** overlap — the extractor
 warns and falls through. See
 [`packages/geometry-ts/README.md`](../packages/geometry-ts/README.md).
@@ -52,6 +60,38 @@ Official field specs and licence: [`datamall.md`](./datamall.md).
 After regenerating rail geometry, skim
 [`packages/geometry-ts/SPOT_CHECKS.md`](../packages/geometry-ts/SPOT_CHECKS.md)
 (CCL loop, DTL curves, NSL, …).
+
+### Under-construction lines (JRL / CRL)
+
+`@sg-transport/shared-types` marks **JRL** and **CRL** as
+`status: construction`. The map draws them dashed when OSM has geometry;
+the MRT simulator **does not** seed fake trains on those corridors until
+you flip the status to `open` at revenue service.
+
+Re-run `pnpm extract:rail` after Overpass updates — the extractor pulls
+`route=subway|light_rail|monorail|construction` (Bukit Panjang / Punggol
+LRT are tagged **monorail** on OSM; CRL uses `route=construction`).
+
+### LRT coverage
+
+Singapore has **three** LRT systems (all still in revenue service):
+
+| Ref | System | Loops |
+|---|---|---|
+| `BPLRT` | Bukit Panjang (SMRT) | Service A/B loops |
+| `SKLRT` | Sengkang (SBS Transit) | East + West |
+| `PGLRT` | Punggol (SBS Transit) | East + West |
+
+BPLRT is undergoing renewal with occasional Sunday closures — it is **not**
+decommissioned. SK and PG are separate lines that share a depot link; both
+should appear as distinct refs after a fresh extract.
+
+### Amended bus routes
+
+Bus geometry is not hand-drawn forever: re-run `pnpm extract:bus` (with
+`BUS_GEOMETRY_SOURCE=live` + `LTA_ACCOUNT_KEY`) after LTA route amendments.
+OSRM snap (`BUS_ROUTE_SNAP=osrm`) picks up the new stop sequence
+automatically.
 
 ## Priority reminder
 

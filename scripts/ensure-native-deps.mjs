@@ -75,10 +75,7 @@ export function needsNativeReinstall(repoRoot = findRepoRoot()) {
   return false;
 }
 
-export function reinstallNativeDeps(
-  repoRoot = findRepoRoot(),
-  env = process.env,
-) {
+export function reinstallNativeDeps(repoRoot = findRepoRoot(), env = process.env) {
   console.warn(
     `[ensure-native-deps] node_modules looks built for another OS ` +
       `(need ${currentPlatformId()} / ${expectedEsbuildPackage()}). ` +
@@ -114,8 +111,7 @@ export function ensureNativeDeps(options = {}) {
 }
 
 const isMain =
-  process.argv[1] &&
-  path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+  process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
 
 if (isMain) {
   try {

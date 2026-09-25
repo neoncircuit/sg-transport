@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { overpassRailToGeoJSON } from "./rail-geojson.js";
 import type { OverpassResponse } from "./overpass.js";
+import { overpassRailToGeoJSON } from "./rail-geojson.js";
 
 describe("overpassRailToGeoJSON", () => {
   it("builds a LineString from a simple route relation", () => {

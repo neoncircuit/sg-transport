@@ -1,12 +1,12 @@
 <!doctype html>
-<html lang="en" data-theme="harbour">
+<html lang="en" data-theme="daylight">
   <head>
     <meta charset="UTF-8" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
-    <meta name="theme-color" content="#050b12" />
+    <meta name="theme-color" content="#e8eef4" />
     <meta name="mobile-web-app-capable" content="yes" />
     <title>SG Live — Singapore Transport Map</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -50,22 +50,37 @@
       <div class="sheet-body" id="sheet-body" hidden>
         <p class="tagline">Singapore, moving — built for the commute</p>
 
-        <ul class="legend" id="legend" aria-label="Vehicle modes">
-          <li data-mode="bus"><span class="swatch"></span>Bus <b id="count-bus">0</b></li>
-          <li data-mode="mrt"><span class="swatch"></span>MRT <b id="count-mrt">0</b></li>
-          <li data-mode="lrt"><span class="swatch"></span>LRT <b id="count-lrt">0</b></li>
-          <li data-mode="plane"><span class="swatch"></span>Air <b id="count-plane">0</b></li>
-          <li data-mode="ship"><span class="swatch"></span>Sea <b id="count-ship">0</b></li>
-        </ul>
+        <fieldset class="legend" id="legend" aria-label="Vehicle modes — tap to show or hide">
+          <button type="button" data-mode="bus" aria-pressed="true"><span class="swatch"></span>Bus <b id="count-bus">0</b></button>
+          <button type="button" data-mode="mrt" aria-pressed="true"><span class="swatch"></span>MRT <b id="count-mrt">0</b></button>
+          <button type="button" data-mode="lrt" aria-pressed="true"><span class="swatch"></span>LRT <b id="count-lrt">0</b></button>
+          <button type="button" data-mode="plane" aria-pressed="false" class="off"><span class="swatch"></span>Air <b id="count-plane">0</b></button>
+          <button type="button" data-mode="ship" aria-pressed="false" class="off"><span class="swatch"></span>Sea <b id="count-ship">0</b></button>
+        </fieldset>
+
+        <div class="rail-legend-block">
+          <span class="rail-legend-label" id="rail-legend-label">Train lines</span>
+          <ul
+            class="rail-legend"
+            id="rail-legend"
+            aria-labelledby="rail-legend-label"
+          ></ul>
+          <p class="rail-legend-note">
+            Colours follow the LTA system map. Operators run trains; LTA owns
+            the network. Bus routes use a single muted slate so they don’t
+            compete with the train rainbow. Lines marked U/C are under
+            construction (geometry only — no simulated trains yet).
+          </p>
+        </div>
 
         <div class="theme-picker">
           <span class="theme-picker-label" id="theme-label">Theme</span>
-          <ul
+          <div
             class="theme-swatches"
             id="theme-swatches"
             role="radiogroup"
             aria-labelledby="theme-label"
-          ></ul>
+          ></div>
         </div>
 
         <footer class="credits">

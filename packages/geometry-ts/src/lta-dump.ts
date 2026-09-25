@@ -37,7 +37,11 @@ export async function resolveDumpPath(
 export async function loadValueDump<T>(filePath: string): Promise<T[]> {
   const raw = JSON.parse(await readFile(filePath, "utf8")) as unknown;
   if (Array.isArray(raw)) return raw as T[];
-  if (typeof raw === "object" && raw !== null && Array.isArray((raw as { value?: unknown }).value)) {
+  if (
+    typeof raw === "object" &&
+    raw !== null &&
+    Array.isArray((raw as { value?: unknown }).value)
+  ) {
     return (raw as { value: T[] }).value;
   }
   throw new Error(`expected { value: [] } or [] in ${filePath}`);

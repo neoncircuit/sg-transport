@@ -8,32 +8,34 @@
  *
  * Successful live fetches are written back under `data/lta/` (gitignored)
  * so offline runs keep the island-wide cache.
+ *
+ * Optional `BUS_ROUTE_SNAP=osrm` drives stop→stop edges via OSRM (cached in
+ * `data/lta/osrm-edges/`) so lines follow roads instead of cutting forests.
  */
 
 import { copyFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type { FeatureCollection } from "geojson";
 import {
-  buildServiceLines,
-  buildStopPoints,
   type BusRouteRow,
   type BusStop,
+  buildServiceLines,
+  buildStopPoints,
 } from "./bus-geojson.js";
 import { defaultLtaDataDir, loadValueDump, resolveDumpPath } from "./lta-dump.js";
+import { OsrmEdgeCache } from "./osrm.js";
+import { buildRoadFollowingServiceLines, routeSnapMode } from "./snap-service-lines.js";
 
 const BASE =
-  process.env.LTA_DATAMALL_BASE ??
-  "https://datamall2.mytransport.sg/ltaodataservice";
+  process.env.LTA_DATAMALL_BASE ?? "https://datamall2.mytransport.sg/ltaodataservice";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.resolve(here, "../data");
 const fixtureDir = path.resolve(here, "../fixtures/bus");
 const linesOut = path.join(outDir, "bus.geojson");
 const stopsOut = path.join(outDir, "bus-stops.geojson");
-const frontendGeom = path.resolve(
-  here,
-  "../../../apps/frontend-ts/public/geometry",
-);
+const frontendGeom = path.resolve(here, "../../../apps/frontend-ts/public/geometry");
 
 type SourcePreference = "auto" | "live" | "local" | "fixture";
 
@@ -42,16 +44,11 @@ function sourcePreference(): SourcePreference {
   if (raw === "live" || raw === "local" || raw === "fixture" || raw === "auto") {
     return raw;
   }
-  console.warn(
-    `[geometry] unknown BUS_GEOMETRY_SOURCE=${raw}; using auto`,
-  );
+  console.warn(`[geometry] unknown BUS_GEOMETRY_SOURCE=${raw}; using auto`);
   return "auto";
 }
 
-async function fetchAllPages<T>(
-  endpoint: string,
-  accountKey: string,
-): Promise<T[]> {
+async function fetchAllPages<T>(endpoint: string, accountKey: string): Promise<T[]> {
   const rows: T[] = [];
   let skip = 0;
   for (;;) {
@@ -112,10 +109,7 @@ async function loadFixtures(): Promise<{
 }
 
 /** Persist live pages so offline extract / pollers can reuse island data. */
-async function cacheLiveDumps(
-  stops: BusStop[],
-  routes: BusRouteRow[],
-): Promise<void> {
+async function cacheLiveDumps(stops: BusStop[], routes: BusRouteRow[]): Promise<void> {
   const root = defaultLtaDataDir();
   const stopsDir = path.join(root, "BusStops");
   const routesDir = path.join(root, "BusRoutes");
@@ -182,9 +176,7 @@ async function resolveInputs(): Promise<{
     if (!local) return null;
     const lines = buildServiceLines(local.stops, local.routes);
     if (lines.features.length === 0) {
-      console.warn(
-        "[geometry] local dumps have 0 overlapping stop/route features",
-      );
+      console.warn("[geometry] local dumps have 0 overlapping stop/route features");
       return null;
     }
     return local;
@@ -231,7 +223,24 @@ async function resolveInputs(): Promise<{
 
 async function main(): Promise<void> {
   const { stops, routes, label } = await resolveInputs();
-  const lines = buildServiceLines(stops, routes);
+  const snap = routeSnapMode();
+  let lines: FeatureCollection;
+
+  if (snap === "osrm") {
+    const cacheDir = path.join(defaultLtaDataDir(), "osrm-edges");
+    const cache = new OsrmEdgeCache(cacheDir);
+    console.log(`[geometry] BUS_ROUTE_SNAP=osrm · caching edges under ${cacheDir}`);
+    lines = await buildRoadFollowingServiceLines(stops, routes, cache, (p) => {
+      if (p.done === p.total || p.done % 250 === 0) {
+        console.log(
+          `[geometry] osrm edges ${p.done}/${p.total} (osrm=${p.osrm} chord=${p.chord} cache=${p.cacheHits})`,
+        );
+      }
+    });
+  } else {
+    lines = buildServiceLines(stops, routes);
+  }
+
   const stopPoints = buildStopPoints(stops);
 
   await mkdir(outDir, { recursive: true });
@@ -242,7 +251,7 @@ async function main(): Promise<void> {
   await copyFile(stopsOut, path.join(frontendGeom, "bus-stops.geojson"));
 
   console.log(
-    `[geometry] source=${label} · ${stops.length} stops, ${routes.length} route rows → ${lines.features.length} lines`,
+    `[geometry] source=${label} snap=${snap} · ${stops.length} stops, ${routes.length} route rows → ${lines.features.length} lines`,
   );
   console.log(`[geometry] wrote ${linesOut}`);
   console.log(`[geometry] wrote ${stopsOut}`);

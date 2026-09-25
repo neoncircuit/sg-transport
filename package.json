@@ -8,17 +8,21 @@
     "ensure:native": "node scripts/ensure-native-deps.mjs",
     "build": "turbo run build",
     "typecheck": "turbo run typecheck",
-    "lint": "turbo run lint",
+    "lint": "biome check .",
+    "lint:fix": "biome check --write .",
     "test": "turbo run test && node --test scripts/app-version.test.mjs scripts/repo-env.test.mjs",
     "version:print": "node scripts/app-version.mjs",
     "extract:rail": "pnpm --filter @sg-transport/geometry extract:rail",
     "extract:bus": "pnpm --filter @sg-transport/geometry extract:bus"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.2.0",
     "turbo": "^2.5.4",
     "typescript": "^5.8.3"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   }
 }

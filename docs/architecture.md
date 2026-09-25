@@ -16,7 +16,14 @@ and “why buses before MRT” live in [`DESIGN.md`](../DESIGN.md).
 │  (simulated on  │                       │                  │
 │   rail.geojson) │                       │  WS /ws          │──▶ MapLibre client
 └─────────────────┘                       │  GET /health     │     (frontend-ts)
-                                          └──────────────────┘
+┌─────────────────┐     POST /ingest      │                  │
+│  adsb-poller-py │ ───────────────────▶  │                  │
+│  (adsb.lol)     │                       │                  │
+└─────────────────┘                       │                  │
+┌─────────────────┐     POST /ingest      │                  │
+│  ais-poller-py  │ ───────────────────▶  │                  │
+│  (aisstream.io) │                       └──────────────────┘
+└─────────────────┘
 ```
 
 **Rules of the road**
@@ -37,7 +44,9 @@ and “why buses before MRT” live in [`DESIGN.md`](../DESIGN.md).
 | `packages/geometry-ts` | Offline extracts → GeoJSON (rail OSM, bus LTA/fixtures) |
 | `services/bus-poller-ts` | Bus positions → ingest (cascade + route snap) |
 | `services/mrt-poller-ts` | Simulated MRT/LRT along rail geometry → ingest |
-| `infra/docker` | Container images for gateway / bus-poller |
+| `services/adsb-poller-py` | ADS-B aircraft (adsb.lol) → ingest as `plane` |
+| `services/ais-poller-py` | AIS vessels (aisstream.io) → ingest as `ship` |
+| `infra/docker` | Container images for gateway / bus / mrt / adsb / ais pollers |
 
 ## Bus poller cascade
 
@@ -52,13 +61,19 @@ Buses are then optionally snapped onto `bus.geojson`
 
 ## Gateway merge
 
-`VehicleStore` keeps a Phase 0 fake fleet, then overlays fresh poller
-snapshots. While a source is within the stale window it **owns** modes:
+`VehicleStore` keeps a Phase 0 fake fleet only when **no** poller has
+ingested recently. While any poller is fresh, the snapshot is **only** those
+overlays — so a solo AIS feed does not leave fake MRT dots drifting over
+water.
 
-| Ingest `source` | Replaces fake modes |
+Known ingest `source` ids:
+
+| Ingest `source` | Typical modes |
 |---|---|
 | `bus-poller` | `bus` |
 | `mrt-poller` | `mrt`, `lrt` |
+| `adsb-poller` | `plane` |
+| `ais-poller` | `ship` |
 
 See [`apps/backend-ts/src/vehicle-store.ts`](../apps/backend-ts/src/vehicle-store.ts).
 
@@ -75,6 +90,7 @@ Details: [Data & geometry](./data-and-geometry.md).
 
 - MapLibre layers: static rail/bus/stops, then vehicle circles (+ hit target).
 - `isInferred: true` vehicles render dimmer (simulated / schedule-based).
+- Legend mode toggles (bus/MRT/LRT on by default; Air/Sea off until opted in).
 - Mobile-first controls (bottom sheet, locate, visibility-aware WS) —
   [`DESIGN.md` §11](../DESIGN.md).
 

@@ -20,7 +20,9 @@ function toFeatureCollection(
       properties: {
         id: v.id,
         mode: v.mode,
-        color: modeColors[v.mode],
+        lineRef: v.lineRef ?? "",
+        operator: v.operator ?? "",
+        color: v.color ?? modeColors[v.mode],
         bearing: v.bearing ?? 0,
         isInferred: v.isInferred,
       },

@@ -9,9 +9,17 @@ function haversineMeters(a: LonLat, b: LonLat): number {
   const lat1 = toRad(a[1]);
   const lat2 = toRad(b[1]);
   const h =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
   return 2 * R * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Polyline length in metres (WGS84 haversine along segments). */
+export function lineLengthMeters(coords: LonLat[]): number {
+  let sum = 0;
+  for (let i = 1; i < coords.length; i++) {
+    sum += haversineMeters(coords[i - 1]!, coords[i]!);
+  }
+  return sum;
 }
 
 export function bearingDegrees(from: LonLat, to: LonLat): number {
@@ -21,8 +29,7 @@ export function bearingDegrees(from: LonLat, to: LonLat): number {
   const φ2 = toRad(to[1]);
   const Δλ = toRad(to[0] - from[0]);
   const y = Math.sin(Δλ) * Math.cos(φ2);
-  const x =
-    Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
+  const x = Math.cos(φ1) * Math.sin(φ2) - Math.sin(φ1) * Math.cos(φ2) * Math.cos(Δλ);
   return (toDeg(Math.atan2(y, x)) + 360) % 360;
 }
 

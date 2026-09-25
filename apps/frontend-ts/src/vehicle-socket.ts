@@ -4,7 +4,9 @@ import {
 } from "@sg-transport/shared-types";
 
 export type SnapshotHandler = (vehicles: VehiclePosition[]) => void;
-export type StatusHandler = (status: "connecting" | "live" | "reconnecting" | "error") => void;
+export type StatusHandler = (
+  status: "connecting" | "live" | "reconnecting" | "error",
+) => void;
 
 /**
  * Thin WebSocket client that reconnects with backoff and only forwards

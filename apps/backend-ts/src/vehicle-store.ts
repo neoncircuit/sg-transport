@@ -1,13 +1,7 @@
-import type { VehicleMode, VehiclePosition } from "@sg-transport/shared-types";
+import type { VehiclePosition } from "@sg-transport/shared-types";
 import { FakeVehicleStore } from "./fake-vehicles.js";
 
 const DEFAULT_STALE_MS = 30_000;
-
-/** Modes a poller source owns (replaces matching fake vehicles while fresh). */
-const SOURCE_MODES: Record<string, VehicleMode[]> = {
-  "bus-poller": ["bus"],
-  "mrt-poller": ["mrt", "lrt"],
-};
 
 interface SourceSnapshot {
   vehicles: VehiclePosition[];
@@ -15,8 +9,9 @@ interface SourceSnapshot {
 }
 
 /**
- * Gateway state store: fake Phase 0 fleet by default, overlaid by poller
- * ingest snapshots. Fresh pollers replace fake vehicles for their modes.
+ * Gateway state store: fake Phase 0 fleet when nothing is ingested.
+ * While any poller is fresh, **only** those overlays are shown — no leftover
+ * fake buses/trains drifting into the sea beside real AIS/ADS-B.
  */
 export class VehicleStore {
   private readonly fake = new FakeVehicleStore();
@@ -47,19 +42,6 @@ export class VehicleStore {
       return this.fake.tick(now);
     }
 
-    const suppressed = new Set<VehicleMode>();
-    for (const [id] of active) {
-      for (const mode of SOURCE_MODES[id] ?? []) {
-        suppressed.add(mode);
-      }
-    }
-
-    let base = this.fake.tick(now);
-    if (suppressed.size > 0) {
-      base = base.filter((v) => !suppressed.has(v.mode));
-    }
-
-    const overlay = active.flatMap(([, snap]) => snap.vehicles);
-    return [...base, ...overlay];
+    return active.flatMap(([, snap]) => snap.vehicles);
   }
 }

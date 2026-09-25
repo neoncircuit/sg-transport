@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+
+FROM python:3.12-slim AS build
+WORKDIR /app
+COPY services/ais-poller-py/pyproject.toml services/ais-poller-py/README.md ./
+COPY services/ais-poller-py/src ./src
+COPY services/ais-poller-py/fixtures ./fixtures
+RUN pip install --no-cache-dir .
+
+FROM python:3.12-slim AS runtime
+WORKDIR /app
+ENV PYTHONUNBUFFERED=1
+ENV AIS_SOURCE=auto
+ENV AIS_FIXTURE=/app/fixtures/vessels.json
+COPY --from=build /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
+COPY --from=build /usr/local/bin/ais-poller /usr/local/bin/ais-poller
+COPY services/ais-poller-py/fixtures /app/fixtures
+USER nobody
+CMD ["ais-poller"]

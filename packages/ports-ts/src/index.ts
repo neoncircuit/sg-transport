@@ -35,10 +35,7 @@ export function preferredGatewayPort(): number {
 }
 
 /** True if the port cannot be bound (already taken). */
-export function isPortTaken(
-  port: number,
-  host = "127.0.0.1",
-): Promise<boolean> {
+export function isPortTaken(port: number, host = "127.0.0.1"): Promise<boolean> {
   return new Promise((resolve) => {
     const socket = createServer();
     socket.once("error", () => resolve(true));
@@ -79,9 +76,7 @@ export async function findFreePort(
     const port = preferred + i;
     if (!(await isPortTaken(port, host))) return port;
   }
-  throw new Error(
-    `no free port in ${preferred}…${preferred + maxAttempts - 1}`,
-  );
+  throw new Error(`no free port in ${preferred}…${preferred + maxAttempts - 1}`);
 }
 
 export async function writeGatewayPort(

@@ -1,0 +1,69 @@
+{
+  "source": "https://github.com/Vorld/singapore-gtfs/releases/download/v2026-07-12/singapore-gtfs.zip",
+  "fetchedAt": "2026-09-24T06:40:45.346Z",
+  "lines": {
+    "NSL": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 258,
+      "offPeakHeadwaySec": 258,
+      "endToEndMin": 76
+    },
+    "EWL": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 366,
+      "offPeakHeadwaySec": 366,
+      "endToEndMin": 46
+    },
+    "NEL": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 240,
+      "offPeakHeadwaySec": 240,
+      "endToEndMin": 36
+    },
+    "CCL": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 306,
+      "offPeakHeadwaySec": 306,
+      "endToEndMin": 66
+    },
+    "DTL": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 264,
+      "offPeakHeadwaySec": 264,
+      "endToEndMin": 70
+    },
+    "TEL": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 270,
+      "offPeakHeadwaySec": 270,
+      "endToEndMin": 65
+    },
+    "BPLRT": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 759,
+      "offPeakHeadwaySec": 759,
+      "endToEndMin": 8
+    },
+    "SKLRT": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 261,
+      "offPeakHeadwaySec": 261,
+      "endToEndMin": 22
+    },
+    "PGLRT": {
+      "firstMin": 330,
+      "lastMin": 1410,
+      "peakHeadwaySec": 270,
+      "offPeakHeadwaySec": 270,
+      "endToEndMin": 22
+    }
+  }
+}

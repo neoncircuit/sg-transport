@@ -1,9 +1,5 @@
-import type {
-  Feature,
-  FeatureCollection,
-  LineString,
-  Position,
-} from "geojson";
+import { normalizeRailRef, operatorForRailRef } from "@sg-transport/shared-types";
+import type { Feature, FeatureCollection, LineString, Position } from "geojson";
 import { colourForRef } from "./config.js";
 import type {
   OverpassElement,
@@ -29,9 +25,7 @@ function isRelation(el: OverpassElement): el is OverpassRelation {
  * segments in member order) when possible; otherwise multiple features share
  * the same ref/name properties.
  */
-export function overpassRailToGeoJSON(
-  data: OverpassResponse,
-): FeatureCollection {
+export function overpassRailToGeoJSON(data: OverpassResponse): FeatureCollection {
   const nodes = new Map<number, OverpassNode>();
   const ways = new Map<number, OverpassWay>();
   const relations: OverpassRelation[] = [];
@@ -45,10 +39,16 @@ export function overpassRailToGeoJSON(
   const features: Feature<LineString>[] = [];
 
   for (const rel of relations) {
-    const ref = rel.tags?.ref ?? rel.tags?.name ?? `rel-${rel.id}`;
+    const rawRef = rel.tags?.ref ?? rel.tags?.name ?? `rel-${rel.id}`;
+    const ref =
+      typeof rawRef === "string" ? normalizeRailRef(rawRef) || rawRef : String(rawRef);
     const name = rel.tags?.name ?? ref;
     const route = rel.tags?.route ?? "subway";
-    const colour = rel.tags?.colour ?? colourForRef(rel.tags?.ref);
+    const osmColour = rel.tags?.colour;
+    const colour = colourForRef(ref);
+    // Prefer official LTA-ish palette when we know the ref; else OSM colour.
+    const resolvedColour = colour !== "#8899aa" ? colour : (osmColour ?? colour);
+    const operatorTag = rel.tags?.operator;
 
     const segments: Position[][] = [];
     for (const member of rel.members) {
@@ -74,7 +74,8 @@ export function overpassRailToGeoJSON(
           ref,
           name,
           route,
-          colour,
+          colour: resolvedColour,
+          operator: operatorForRailRef(ref) ?? operatorTag ?? undefined,
           source: "osm-overpass",
         },
         geometry: { type: "LineString", coordinates: line },

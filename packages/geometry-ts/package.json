@@ -10,10 +10,12 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "tsc -p tsconfig.json --noEmit",
-    "test": "node --import tsx --test src/**/*.test.ts",
+    "test": "node --import tsx --test src/*.test.ts",
     "extract:rail": "node ../../scripts/with-repo-env.mjs tsx src/extract-rail.ts",
     "extract:bus": "node ../../scripts/with-repo-env.mjs tsx src/extract-bus.ts"
+  },
+  "dependencies": {
+    "@sg-transport/shared-types": "workspace:*"
   },
   "devDependencies": {
     "@types/geojson": "^7946.0.16",

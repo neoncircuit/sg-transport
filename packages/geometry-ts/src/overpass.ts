@@ -34,7 +34,7 @@ const OVERPASS_FALLBACKS = [
   "https://overpass.private.coffee/api/interpreter",
 ];
 
-/** Overpass QL: Singapore subway + light_rail route relations with full geometry. */
+/** Overpass QL: Singapore subway + LRT (light_rail / monorail) + under-construction. */
 export function railRoutesQuery(): string {
   const { south, west, north, east } = SINGAPORE_BBOX;
   return `
@@ -42,6 +42,12 @@ export function railRoutesQuery(): string {
 (
   relation["type"="route"]["route"="subway"](${south},${west},${north},${east});
   relation["type"="route"]["route"="light_rail"](${south},${west},${north},${east});
+  // Bukit Panjang / Punggol LRT are tagged monorail on OSM (not light_rail).
+  relation["type"="route"]["route"="monorail"](${south},${west},${north},${east});
+  // Cross Island Line (and similar) use route=construction on OSM today.
+  relation["type"="route"]["route"="construction"](${south},${west},${north},${east});
+  relation["type"="route"]["construction"="subway"](${south},${west},${north},${east});
+  relation["type"="route"]["proposed"="subway"](${south},${west},${north},${east});
 );
 out body;
 >;

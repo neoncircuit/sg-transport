@@ -3,15 +3,12 @@ import { describe, it } from "node:test";
 import type { FeatureCollection } from "geojson";
 import { vehiclesFromArrivalFixtures } from "./fixture.js";
 import { stopCodesFromGeoJSON } from "./lta.js";
-import {
-  normalizeBusArrival,
-  type LtaBusArrivalResponse,
-} from "./normalize.js";
+import { type LtaBusArrivalResponse, normalizeBusArrival } from "./normalize.js";
 import {
   ARRIVAL_UPDATE_MS,
-  DEFAULT_ARRIVAL_BUDGET,
   classifyStops,
   classifyStopsFromGeoJSON,
+  DEFAULT_ARRIVAL_BUDGET,
   estimateDailyArrivalCalls,
   planArrivalPoll,
 } from "./schedule.js";
@@ -64,11 +61,11 @@ describe("SkeletonBusSource", () => {
     const a = source.tick(1_000);
     const b = source.tick(2_000);
     assert.ok(a.length >= 3);
-    assert.equal(a.every((v) => v.mode === "bus" && v.isInferred), true);
-    assert.deepEqual(
-      a.map((v) => v.id).sort(),
-      b.map((v) => v.id).sort(),
+    assert.equal(
+      a.every((v) => v.mode === "bus" && v.isInferred),
+      true,
     );
+    assert.deepEqual(a.map((v) => v.id).sort(), b.map((v) => v.id).sort());
   });
 });
 
@@ -77,9 +74,7 @@ describe("arrival fixtures", () => {
     const vehicles = await vehiclesFromArrivalFixtures(1_700_000_000_000);
     if (vehicles.length === 0) return;
     assert.ok(vehicles.every((v) => v.mode === "bus"));
-    assert.ok(
-      vehicles.some((v) => Number.isFinite(v.lat) && Number.isFinite(v.lon)),
-    );
+    assert.ok(vehicles.some((v) => Number.isFinite(v.lat) && Number.isFinite(v.lon)));
   });
 });
 
