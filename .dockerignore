@@ -9,7 +9,6 @@ node_modules
 !README.md
 !services/adsb-poller-py/README.md
 !services/ais-poller-py/README.md
-apps/frontend-ts
 data
 docs
 coverage

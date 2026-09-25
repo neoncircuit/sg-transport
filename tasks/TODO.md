@@ -231,11 +231,13 @@ now have enough moving parts that silent failures are easy to miss.
 buses + scheduled/simulated MRT (Phase 3), ideally with planes/ships stable
 too — put it on a public URL.
 
-Prep (no public URL yet):
+Prep (no public URL with live keys yet):
 
 - [x] `docker-compose.yml` for gateway + pollers + frontend rehearsal
 - [x] [`docs/deploy.md`](../docs/deploy.md) checklist + Railway first-try steps
 - [x] `infra/railway/*.toml` + `Dockerfile.frontend`
+- [x] GitHub Pages **demo** (simulated fleet) via `.github/workflows/pages.yml`
+      — enable Pages → GitHub Actions in repo settings
 
 Still required to go live:
 

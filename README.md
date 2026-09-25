@@ -1,13 +1,29 @@
 # SG Live — Real-Time Singapore Transport Map
 
-A 2D live map of Singapore transport: buses, MRT/LRT, planes, and ships as
-moving dots on real route geometry. Inspired by James Potter’s
+A 2D live map of Singapore transport: **buses**, **MRT/LRT**, **planes**, and
+**ships** as moving dots on real route geometry. Inspired by James Potter’s
 [Zone One](https://london.jamespotter.dev/) and Hongwei PENG’s
 [London Live](https://london.pengrubin.com).
 
-> **Status:** Phase 6 local stack — buses, scheduled/simulated MRT, ADS-B
-> planes, AIS ships (Air/Sea opt-in via legend). Public deploy is last
-> (Phase 8); confirm AIS redistribution terms before going public.
+**[Open the public demo →](https://neoncircuit.github.io/sg-transport/)**
+*(simulated fleet on GitHub Pages — not live DataMall/AIS)*
+
+> **Status:** Core layers run locally (Phases 0–6 + MCP/polish). Public
+> **live** deploy (Railway) is Phase 8 — confirm DataMall / AIS terms before
+> swapping the demo for a keyed gateway.
+
+## About
+
+SG Live is a mobile-first MapLibre client plus a small WebSocket gateway.
+Pollers normalize every mode into one `VehiclePosition` contract, so buses,
+trains, aircraft, and vessels share the same map pipeline. Trains may be
+scheduled/simulated (`isInferred`) until a durable live feed exists.
+
+| | |
+|---|---|
+| **Stack** | TypeScript monorepo (pnpm + Turborepo), Vite, MapLibre GL, Node `ws`, Python pollers |
+| **Data** | LTA DataMall (buses), OSM rail geometry, community GTFS schedule overlay, adsb.lol, aisstream.io |
+| **License notes** | See [`CREDITS.md`](./CREDITS.md) and [`docs/datamall.md`](./docs/datamall.md) before redistributing feeds |
 
 ## Quick start
 
@@ -21,8 +37,10 @@ pnpm dev
 
 - Frontend: http://localhost:5173  
 - Gateway: http://localhost:8787/health · `ws://localhost:8787/ws`
+- Demo without gateway: http://localhost:5173/?demo=1
 
 Setup, env vars, and scripts: **[docs/development.md](./docs/development.md)**.
+Deploy / Railway: **[docs/deploy.md](./docs/deploy.md)**.
 
 ## Documentation
 
@@ -41,12 +59,14 @@ apps/frontend-ts           MapLibre GL + Vite
 apps/backend-ts            WebSocket gateway + poller ingest
 packages/shared-types-ts   VehiclePosition contract
 packages/geometry-ts       OSM rail / LTA bus geometry extract
+packages/mcp-server-py     Optional MCP tools over GET /vehicles
 services/bus-poller-ts     Bus fleet → ingest (cascade + snap)
 services/mrt-poller-ts     Simulated MRT/LRT along rail geometry
 services/adsb-poller-py    ADS-B aircraft → ingest (adsb.lol)
 services/ais-poller-py     AIS vessels → ingest (aisstream.io)
 docs/                      Architecture, development, DataMall notes
-infra/docker/              Dockerfiles for gateway + pollers
+infra/docker/              Dockerfiles for gateway, pollers, frontend
+infra/railway/             Railway service config stubs
 ```
 
 ## Credits

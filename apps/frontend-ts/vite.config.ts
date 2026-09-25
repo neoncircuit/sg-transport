@@ -73,6 +73,8 @@ function gatewayProxyPlugin(): Plugin {
 
 export default defineConfig({
   plugins: [gatewayProxyPlugin()],
+  // GitHub Pages project sites need `/<repo>/`; override with VITE_BASE=/ for Railway.
+  base: process.env.VITE_BASE?.trim() || "/",
   define: {
     __APP_VERSION__: JSON.stringify(appVersion),
     __APP_VERSION_BADGE__: JSON.stringify(versionBadge),

@@ -6,6 +6,7 @@ declare const __GIT_SHA__: string;
 
 interface ImportMetaEnv {
   readonly VITE_WS_URL?: string;
+  readonly VITE_DEMO_MODE?: string;
 }
 
 interface ImportMeta {

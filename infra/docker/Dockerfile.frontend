@@ -15,11 +15,15 @@ COPY apps/frontend-ts apps/frontend-ts
 # Public WebSocket URL of the gateway (e.g. wss://….up.railway.app/ws)
 ARG VITE_WS_URL=
 ENV VITE_WS_URL=$VITE_WS_URL
+ARG VITE_BASE=/
+ENV VITE_BASE=$VITE_BASE
+ARG VITE_DEMO_MODE=
+ENV VITE_DEMO_MODE=$VITE_DEMO_MODE
 ARG APP_VERSION=0.0.0-dev
 ARG GIT_SHA=unknown
 ENV APP_VERSION=$APP_VERSION
 ENV GIT_SHA=$GIT_SHA
-RUN pnpm --filter @sg-transport/frontend build
+RUN pnpm --filter @sg-transport/frontend... build
 
 FROM nginx:1.27-alpine AS runtime
 COPY infra/docker/nginx.frontend.conf /etc/nginx/conf.d/default.conf

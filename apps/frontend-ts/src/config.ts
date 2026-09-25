@@ -29,3 +29,16 @@ export function wsUrl(): string {
   const proto = window.location.protocol === "https:" ? "wss:" : "ws:";
   return `${proto}//${window.location.host}/ws`;
 }
+
+/**
+ * Static Pages / offline showcase without a gateway.
+ * Enabled by `VITE_DEMO_MODE=1` or `?demo=1` in the URL.
+ */
+export function isDemoMode(): boolean {
+  if (import.meta.env.VITE_DEMO_MODE === "1") return true;
+  try {
+    return new URLSearchParams(window.location.search).get("demo") === "1";
+  } catch {
+    return false;
+  }
+}

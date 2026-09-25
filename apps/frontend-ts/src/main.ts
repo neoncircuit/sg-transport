@@ -5,11 +5,13 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import {
   ALL_MODES,
   basemapStyleFor,
+  isDemoMode,
   MODE_LABELS,
   SINGAPORE_CENTER,
   SINGAPORE_ZOOM,
   wsUrl,
 } from "./config";
+import { startDemoFleet } from "./demo-fleet";
 import {
   filterByModeVisibility,
   type ModeVisibility,
@@ -329,41 +331,49 @@ map.on("load", () => {
     }
   });
 
-  socket = new VehicleSocket(
-    wsUrl(),
-    (vehicles) => {
-      latestVehicles = vehicles;
-      if (!remountingStyle) {
-        paintVehicles(map, vehicles);
-      }
-      updateLegend(vehicles);
-      setStatus(fleetStatusLabel(vehicles), true);
-    },
-    (status) => {
-      switch (status) {
-        case "connecting":
-          setStatus("Connecting to gateway…");
-          break;
-        case "live":
-          setStatus("Gateway connected", true);
-          break;
-        case "reconnecting":
-          setStatus("Reconnecting…");
-          break;
-        case "error":
-          setStatus("Gateway error — retrying");
-          break;
-      }
-    },
-  );
+  const applyFleet = (vehicles: VehiclePosition[], statusText?: string): void => {
+    latestVehicles = vehicles;
+    if (!remountingStyle) paintVehicles(map, vehicles);
+    updateLegend(vehicles);
+    setStatus(statusText ?? fleetStatusLabel(vehicles), true);
+  };
 
-  socket.connect();
+  if (isDemoMode()) {
+    setStatus("Demo mode — local simulated fleet", true);
+    const stopDemo = startDemoFleet((vehicles) => {
+      applyFleet(vehicles, "Demo · simulated fleet (not live data)");
+    });
+    window.addEventListener("beforeunload", () => stopDemo());
+  } else {
+    socket = new VehicleSocket(
+      wsUrl(),
+      (vehicles) => applyFleet(vehicles),
+      (status) => {
+        switch (status) {
+          case "connecting":
+            setStatus("Connecting to gateway…");
+            break;
+          case "live":
+            setStatus("Gateway connected", true);
+            break;
+          case "reconnecting":
+            setStatus("Reconnecting…");
+            break;
+          case "error":
+            setStatus("Gateway error — retrying");
+            break;
+        }
+      },
+    );
 
-  document.addEventListener("visibilitychange", () => {
-    socket?.setPaused(document.hidden);
-  });
+    socket.connect();
 
-  window.addEventListener("beforeunload", () => socket?.close());
+    document.addEventListener("visibilitychange", () => {
+      socket?.setPaused(document.hidden);
+    });
+
+    window.addEventListener("beforeunload", () => socket?.close());
+  }
 });
 
 const params = new URLSearchParams(window.location.search);
