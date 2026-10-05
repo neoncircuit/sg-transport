@@ -12,6 +12,7 @@ import {
   wsUrl,
 } from "./config";
 import { startDemoFleet } from "./demo-fleet";
+import { formatSingaporeClock, vehicleStatusLine } from "./map-chrome";
 import {
   filterByModeVisibility,
   type ModeVisibility,
@@ -46,12 +47,24 @@ const sheetToggleEl = document.querySelector<HTMLButtonElement>("#sheet-toggle")
 const locateBtn = document.querySelector<HTMLButtonElement>("#locate-btn");
 const handleLabel = document.querySelector<HTMLElement>(".sheet-handle-label");
 const versionBadgeEl = document.querySelector<HTMLElement>("#version-badge");
+const clockEl = document.querySelector<HTMLTimeElement>("#sg-clock");
 
 let activeTheme: ThemeDefinition = applyTheme(readStoredTheme());
 let latestVehicles: VehiclePosition[] = [];
 let modeVisibility: ModeVisibility = readStoredModeVisibility();
 let socket: VehicleSocket | null = null;
 let remountingStyle = false;
+/** Vehicle the camera tracks until the user pans or taps empty map. */
+let followedId: string | null = null;
+
+function paintClock(now = new Date()): void {
+  if (!clockEl) return;
+  clockEl.dateTime = now.toISOString();
+  clockEl.textContent = `${formatSingaporeClock(now)} SGT`;
+}
+
+paintClock();
+window.setInterval(() => paintClock(), 1000);
 
 if (versionBadgeEl) {
   versionBadgeEl.textContent = __APP_VERSION_BADGE__;
@@ -298,7 +311,10 @@ sheetToggleEl?.addEventListener("click", () => {
   const open = sheetEl?.dataset.expanded !== "true";
   setSheetExpanded(Boolean(open));
 });
-locateBtn?.addEventListener("click", () => centerOnMe(map));
+locateBtn?.addEventListener("click", () => {
+  followedId = null;
+  centerOnMe(map);
+});
 
 map.on("load", () => {
   mountOverlayLayers(map);
@@ -308,33 +324,50 @@ map.on("load", () => {
     if (!remountingStyle) paintVehicles(map, latestVehicles);
   });
 
+  map.on("dragstart", () => {
+    followedId = null;
+  });
+
   map.on("click", HIT_LAYER_ID, (e) => {
     const feature = e.features?.[0];
     if (!feature) return;
     const id = String(feature.properties?.id ?? "");
-    const mode = String(feature.properties?.mode ?? "");
-    const lineRef = String(feature.properties?.lineRef ?? "");
-    const operator = String(feature.properties?.operator ?? "");
-    const bits = [mode.toUpperCase()];
-    if (lineRef) bits.push(lineRef);
-    if (operator) bits.push(operator);
-    bits.push(id);
-    setStatus(bits.join(" · "), true);
+    const vehicle = latestVehicles.find((v) => v.id === id);
+    followedId = id;
+    if (vehicle) {
+      map.easeTo({
+        center: [vehicle.lon, vehicle.lat],
+        duration: 600,
+        essential: true,
+      });
+      setStatus(`${vehicleStatusLine(vehicle)} · following`, true);
+    }
     setSheetExpanded(true);
   });
 
-  // Tap empty map to collapse the sheet (more map, less chrome).
+  // Tap empty map to release follow and collapse the sheet.
   map.on("click", (e) => {
     const hits = map.queryRenderedFeatures(e.point, { layers: [HIT_LAYER_ID] });
-    if (hits.length === 0 && sheetEl?.dataset.expanded === "true") {
-      setSheetExpanded(false);
-    }
+    if (hits.length > 0) return;
+    followedId = null;
+    if (sheetEl?.dataset.expanded === "true") setSheetExpanded(false);
   });
 
   const applyFleet = (vehicles: VehiclePosition[], statusText?: string): void => {
     latestVehicles = vehicles;
     if (!remountingStyle) paintVehicles(map, vehicles);
     updateLegend(vehicles);
+    const followed = followedId ? vehicles.find((v) => v.id === followedId) : undefined;
+    if (followedId && !followed) followedId = null;
+    if (followed) {
+      map.easeTo({
+        center: [followed.lon, followed.lat],
+        duration: 800,
+        essential: true,
+      });
+      setStatus(`${vehicleStatusLine(followed)} · following`, true);
+      return;
+    }
     setStatus(statusText ?? fleetStatusLabel(vehicles), true);
   };
 

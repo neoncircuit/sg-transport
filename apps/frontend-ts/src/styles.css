@@ -273,6 +273,22 @@ body {
   padding: 0.2rem 0.45rem;
 }
 
+.sheet-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  margin-left: auto;
+}
+
+.sg-clock {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
 .tagline {
   margin: 0.65rem 0 0;
   font-size: 0.8rem;
